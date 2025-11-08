@@ -5,7 +5,7 @@ Shows real-time particle trails based on simulation state.
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Rectangle
 import gymnasium as gym
 import gymtorax
 from agent import RandomAgent
@@ -32,6 +32,10 @@ class LiveTokamakChamber:
         self.prev_severity = float('inf')
         self.is_corrective = False
         self.violation_history = []
+        # Store previous parameter values for arrows
+        self.prev_beta_N = None
+        self.prev_q_min = None
+        self.prev_q95 = None
         self._init_trails()
     
     def _init_trails(self):
@@ -89,7 +93,7 @@ class LiveTokamakChamber:
         """Draw the chamber."""
         self.ax.clear()
         self.ax.set_xlim(-12, 12)
-        self.ax.set_ylim(-10, 8)
+        self.ax.set_ylim(-12, 8)  # More space for explanations
         self.ax.set_aspect('equal')
         self.ax.axis('off')
         self.ax.set_facecolor('#0a0a0f')
@@ -162,28 +166,111 @@ class LiveTokamakChamber:
             status = "🔴 VIOLATION"
             status_color = 'red'
         
-        # Main status with explanation
+        # Visual parameter indicators (bars with colors)
+        safe_bounds = {
+            'β_N': (0.5, 3.0),
+            'q_min': (1.0, float('inf')),
+            'q95': (3.0, 5.0)
+        }
+        
+        # Draw visual parameter bars on the right side
+        bar_x = 10.5
+        bar_width = 0.8
+        bar_spacing = 1.2
+        
+        params = [
+            ('beta_N', beta_N, safe_bounds['β_N'][0], safe_bounds['β_N'][1], 'cyan', 'β_N: Pressure'),
+            ('q_min', q_min, safe_bounds['q_min'][0], None, 'green', 'q_min: Internal stability'),
+            ('q95', q95, safe_bounds['q95'][0], safe_bounds['q95'][1], 'blue', 'q95: Edge stability')
+        ]
+        
+        for i, (name, value, min_val, max_val, color, label) in enumerate(params):
+            bar_y = -8 + i * bar_spacing
+            
+            # Determine if in bounds
+            in_bounds = True
+            if max_val is None:
+                in_bounds = value >= min_val
+            else:
+                in_bounds = min_val <= value <= max_val
+            
+            # Bar color: green if safe, red if out of bounds
+            bar_color = '#00ff00' if in_bounds else '#ff0000'
+            
+            # Draw bar background (safe range)
+            if max_val is None:
+                safe_range = 2.0  # Arbitrary scale for q_min
+                safe_start = min_val
+            else:
+                safe_range = max_val - min_val
+                safe_start = min_val
+            
+            # Normalize value for display
+            if max_val is None:
+                display_val = (value - min_val) / 1.0  # Scale for q_min
+                display_val = min(display_val, 2.0)
+            else:
+                display_val = (value - min_val) / safe_range
+                display_val = max(0, min(display_val, 1.5))  # Can go slightly beyond
+            
+            # Draw safe range (green background)
+            safe_height = 0.3
+            self.ax.add_patch(plt.Rectangle((bar_x, bar_y - safe_height/2), bar_width, safe_height,
+                                          facecolor='#004400', edgecolor='#00aa00', linewidth=1, alpha=0.5, zorder=20))
+            
+            # Draw current value indicator
+            indicator_y = bar_y - safe_height/2 + (display_val / 1.5) * safe_height
+            indicator_color = bar_color
+            self.ax.scatter(bar_x + bar_width/2, indicator_y, s=200, c=indicator_color, 
+                          edgecolors='white', linewidths=2, zorder=21, marker='o')
+            
+            # Arrow showing direction (if we have previous value)
+            prev_attr_map = {'beta_N': 'prev_beta_N', 'q_min': 'prev_q_min', 'q95': 'prev_q95'}
+            prev_attr = prev_attr_map.get(name)
+            if prev_attr and hasattr(self, prev_attr):
+                prev_val = getattr(self, prev_attr)
+                if prev_val is not None:
+                    if value > prev_val:
+                        # Arrow right (increasing) - red if out of bounds, green if in bounds
+                        arrow_color = '#ff0000' if not in_bounds else '#00ff00'
+                        self.ax.arrow(bar_x + bar_width + 0.2, indicator_y, 0.3, 0, 
+                                    head_width=0.1, head_length=0.1, fc=arrow_color, ec=arrow_color, zorder=22)
+                    elif value < prev_val:
+                        # Arrow left (decreasing) - green if fixing violation, red if making safe worse
+                        arrow_color = '#00ff00' if not in_bounds else '#ff0000'
+                        self.ax.arrow(bar_x + bar_width + 0.2, indicator_y, -0.3, 0, 
+                                    head_width=0.1, head_length=0.1, fc=arrow_color, ec=arrow_color, zorder=22)
+            
+            # Store current value for next frame
+            if prev_attr:
+                setattr(self, prev_attr, value)
+            
+            # Add label below the bar
+            self.ax.text(bar_x + bar_width/2, bar_y - 0.5, label, 
+                        ha='center', va='top', fontsize=9, color='white', weight='bold', zorder=23)
+        
+        # Visual status indicator (large colored circle)
+        status_circle_size = 80 if ok else (100 if self.is_corrective else 60)
+        status_circle_color = '#00ff00' if ok else ('#ff8800' if self.is_corrective else '#ff0000')
+        self.ax.scatter(-10.5, 0, s=status_circle_size, c=status_circle_color, 
+                       alpha=0.8, edgecolors='white', linewidths=3, zorder=20)
+        
+        # Status symbol in center
+        if ok:
+            symbol = '✓'
+        elif self.is_corrective:
+            symbol = '↻'  # Rotating arrow for self-fixing
+        else:
+            symbol = '✗'
+        
+        self.ax.text(-10.5, 0, symbol, ha='center', va='center', fontsize=30, 
+                    color='white', weight='bold', zorder=21)
+        
+        # Main status (minimal text)
         status_text = f"{status} | β_N={beta_N:.2f} | q_min={q_min:.2f} | q95={q95:.2f}"
         self.ax.text(0, -9, status_text, 
-                    ha='center', va='top', fontsize=13, color=status_color, weight='bold',
+                    ha='center', va='top', fontsize=12, color=status_color, weight='bold',
                     bbox=dict(boxstyle='round', facecolor='black', alpha=0.8, edgecolor=status_color, linewidth=2))
-        
-        # Legend/explanation
-        legend_text = "D-shape = Plasma boundary (changes with β_N, q_min, q95) | Inner ring = Violation severity | Dots = Charged particles"
-        self.ax.text(0, -8.2, legend_text, 
-                    ha='center', va='top', fontsize=9, color='#888888', style='italic',
-                    bbox=dict(boxstyle='round', facecolor='black', alpha=0.5))
-        
-        # Detailed status
-        details = []
-        if not in_box:
-            details.append("⚠️ Out of safe box")
-        if not smooth:
-            details.append("⚠️ Rough changes")
-        if details:
-            self.ax.text(0, -10.5, " | ".join(details), 
-                        ha='center', va='top', fontsize=10, color='yellow',
-                        bbox=dict(boxstyle='round', facecolor='black', alpha=0.6))
         
         # Plasma boundary - represents the actual plasma shape
         # Shape changes based on beta_N (size), q_min (triangularity), q95 (elongation)

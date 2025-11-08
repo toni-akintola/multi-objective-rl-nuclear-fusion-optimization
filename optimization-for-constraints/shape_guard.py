@@ -80,8 +80,21 @@ def shape_violation(prev_state: dict | None,
         delta_severity = float(np.linalg.norm(delta))
 
     # severity based on both absolute safety and jump size
-    box_severity = 0.0 if in_box else 1.0
-    severity = box_severity + delta_severity
+    # Normalize box_severity: 0 if in box, proportional to distance if out
+    if in_box:
+        box_severity = 0.0
+    else:
+        # Calculate how far out of bounds we are (normalized)
+        beta_N, q_min, q95 = shape
+        beta_violation = max(0, BETA_N_MIN - beta_N, beta_N - BETA_N_MAX) / (BETA_N_MAX - BETA_N_MIN)
+        qmin_violation = max(0, QMIN_MIN - q_min) / QMIN_MIN if q_min < QMIN_MIN else 0
+        q95_violation = max(0, Q95_MIN - q95, q95 - Q95_MAX) / (Q95_MAX - Q95_MIN)
+        box_severity = min(1.0, (beta_violation + qmin_violation + q95_violation) / 3.0)
+    
+    # Combine: box violation (0-1) + smoothness violation (0-1, normalized)
+    # Normalize delta_severity: typical values are 0-0.5, cap at 1.0
+    normalized_delta = min(delta_severity / 0.5, 1.0) if not smooth else 0.0
+    severity = box_severity + normalized_delta * 0.5  # Weight smoothness less
 
     ok = in_box and smooth
 

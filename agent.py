@@ -43,12 +43,14 @@ class Agent(abc.ABC):
         """
         Call this AFTER env.step().
         
-        Allows corrective violations: if we're already in violation, we allow
-        violations that reduce severity (corrective actions). Only penalizes
-        violations that make things worse or occur when we were safe.
+        Improved reward shaping:
+        - Penalizes violations that worsen or occur when safe
+        - Rewards safe states
+        - Rewards corrective actions (self-fixing)
+        - Uses normalized severity for balanced penalties
         
         Returns:
-            new_reward: original reward + (possibly negative) shape penalty.
+            new_reward: original reward + shape bonus/penalty.
         """
         if state is None or self.shape_penalty <= 0.0:
             # nothing to do
@@ -57,29 +59,50 @@ class Agent(abc.ABC):
         
         info = shape_violation(self.prev_state, state)
         
-        # Check if this is a corrective action
+        # Get previous severity BEFORE updating last_shape_info
+        prev_severity = self.last_shape_info.get("severity", float('inf')) if self.last_shape_info else float('inf')
         was_in_violation = (self.last_shape_info is not None and 
                            not self.last_shape_info.get("ok", True))
-        is_corrective = False
         
+        # Check if this is a corrective action
+        is_corrective = False
         if was_in_violation and not info["ok"]:
             # We were in violation, and still are - but is severity decreasing?
-            prev_severity = self.last_shape_info.get("severity", float('inf'))
             current_severity = info.get("severity", 0.0)
             is_corrective = current_severity < prev_severity
         
+        # Update state tracking
         self.last_shape_info = info
         self.prev_state = state
         
-        # Only penalize if:
-        # 1. We're violating AND it's not a corrective action (severity decreasing)
-        # 2. We went from safe to violation (new violation)
-        if not info["ok"] and not is_corrective:
-            penalty = self.shape_penalty * (1.0 + info["severity"])
-            return reward - penalty
+        # Normalize severity to [0, 1] range for more balanced penalties
+        # Severity can be: 0 (perfect) to ~2+ (very bad)
+        normalized_severity = min(info["severity"] / 2.0, 1.0)  # Cap at 1.0 for severity > 2.0
         
-        # If corrective, we might even give a small bonus (optional)
-        # For now, just don't penalize corrective actions
+        # Reward safe states
+        if info["ok"]:
+            # Bonus for being safe: significant positive reward
+            safety_bonus = self.shape_penalty * 3.0  # 3x penalty as bonus to strongly encourage safety
+            return reward + safety_bonus
+        
+        # Handle violations
+        if not info["ok"]:
+            if is_corrective:
+                # Reward self-fixing: give bonus proportional to improvement
+                severity_reduction = prev_severity - info["severity"]
+                # Bonus for reducing severity (self-fixing)
+                # Normalize the reduction (severity is typically 0-2)
+                normalized_reduction = min(severity_reduction / 1.0, 1.0)
+                # Much larger bonus for self-fixing to strongly encourage recovery
+                corrective_bonus = self.shape_penalty * 2.0 * normalized_reduction  # Up to 2x penalty as bonus
+                return reward + corrective_bonus
+            else:
+                # Penalize worsening violations or new violations
+                # Use normalized severity for more balanced penalty
+                # Very small penalty: 0.1x to 0.4x of shape_penalty (much smaller)
+                penalty = self.shape_penalty * (0.1 + normalized_severity * 0.3)
+                return reward - penalty
+        
         return reward
 
     @abc.abstractmethod

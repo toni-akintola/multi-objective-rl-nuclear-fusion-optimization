@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from agent import Agent, RandomAgent
+from iter_hybrid_shape_guard_env import make_iter_hybrid_shape_guard_env
 import importlib.util
 from pathlib import Path
 
@@ -17,9 +18,23 @@ spec.loader.exec_module(shape_guard)
 shape_violation = shape_guard.shape_violation
 
 
-def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False):
-    """Run random agent for multiple episodes and track rewards."""
-    env = gym.make("gymtorax/IterHybrid-v0")
+def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False, 
+        use_shape_guard_env=False, shape_penalty=0.05):
+    """Run agent for multiple episodes and track rewards.
+    
+    Args:
+        agent: The agent to run
+        num_episodes: Number of episodes to run
+        track_shape: Whether to track shape data for visualization
+        interactive: Whether to show step-by-step output
+        use_shape_guard_env: Whether to use environment with integrated shape guard
+        shape_penalty: Shape penalty coefficient (only used if use_shape_guard_env=True)
+    """
+    # Create environment with or without shape guard
+    if use_shape_guard_env:
+        env = make_iter_hybrid_shape_guard_env(shape_penalty=shape_penalty, enable_shape_guard=True)
+    else:
+        env = gym.make("gymtorax/IterHybrid-v0")
 
     episode_rewards = []
     episode_lengths = []
@@ -29,7 +44,8 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False):
 
     for episode in tqdm(range(num_episodes)):
         observation, info = env.reset()
-        agent.reset_state(observation)  # Initialize shape tracking
+        if not use_shape_guard_env:
+            agent.reset_state(observation)  # Initialize shape tracking (only needed if not using shape guard env)
         episode_reward = 0
         steps = 0
         terminated = False
@@ -39,7 +55,7 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False):
         total_penalty = 0.0
         
         # Diagnostic: Check initial state
-        if episode == 0 and agent.shape_penalty > 0:
+        if episode == 0 and (use_shape_guard_env or agent.shape_penalty > 0):
             initial_info = shape_violation(None, observation)
             print(f"\n[Diagnostic] Initial state: β_N={initial_info['shape'][0]:.3f}, "
                   f"q_min={initial_info['shape'][1]:.3f}, q95={initial_info['shape'][2]:.3f}, "
@@ -49,11 +65,26 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False):
             action = agent.act(observation)  # action
             observation, reward, terminated, truncated, info = env.step(action)
             original_reward = reward
-            reward = agent.apply_shape_safety(reward, observation)  # Apply shape penalty
+            
+            # Apply shape guard only if not using shape guard environment
+            if not use_shape_guard_env:
+                reward = agent.apply_shape_safety(reward, observation)  # Apply shape penalty
+            else:
+                # Shape guard is already applied by environment, but we can access shape info
+                if hasattr(env, 'shape_info') and env.shape_info:
+                    # Use environment's shape info for tracking
+                    pass
+            
+            # Get shape info from environment or agent
+            if use_shape_guard_env and hasattr(env, 'shape_info'):
+                shape_info = env.shape_info
+            elif hasattr(agent, 'last_shape_info'):
+                shape_info = agent.last_shape_info
+            else:
+                shape_info = None
             
             # Interactive step-by-step display
-            if interactive and agent.last_shape_info:
-                shape_info = agent.last_shape_info
+            if interactive and shape_info:
                 # Get previous severity from history if available
                 prev_severity = shape_history[-1]["severity"] if shape_history else float('inf')
                 
@@ -77,24 +108,28 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False):
                 penalty_applied = original_reward - reward
                 if penalty_applied > 0:
                     print(f"    Reward: {original_reward:.3f} → {reward:.3f} (penalty: -{penalty_applied:.3f})")
+                elif reward > original_reward:
+                    print(f"    Reward: {original_reward:.3f} → {reward:.3f} (bonus: +{reward - original_reward:.3f})")
                 else:
-                    print(f"    Reward: {original_reward:.3f} → {reward:.3f} (no penalty)")
+                    print(f"    Reward: {original_reward:.3f} → {reward:.3f} (no change)")
                 if is_corrective:
                     print(f"    ⭐ Corrective action! Severity reduced from {prev_severity:.3f} to {shape_info['severity']:.3f}")
             
             # Track violations and penalties
-            if agent.last_shape_info:
-                if not agent.last_shape_info["ok"]:
+            if shape_info:
+                if not shape_info["ok"]:
                     shape_violations_count += 1
                     penalty = original_reward - reward
-                    total_penalty += penalty
+                    total_penalty += abs(penalty)  # Use abs since it could be negative (bonus)
                     # Check if it was corrective
-                    if hasattr(agent, 'last_shape_info') and agent.last_shape_info.get('corrective', False):
+                    prev_severity = shape_history[-1]["severity"] if shape_history else float('inf')
+                    is_corrective = (prev_severity != float('inf') and 
+                                    shape_info["severity"] < prev_severity)
+                    if is_corrective:
                         corrective_actions_count += 1
                 
                 # Track shape data for visualization
-                if track_shape and agent.shape_penalty > 0:
-                    shape_info = agent.last_shape_info
+                if track_shape:
                     prev_severity = shape_history[-1]["severity"] if shape_history else float('inf')
                     is_corrective = (not shape_info["ok"] and 
                                    prev_severity != float('inf') and 
@@ -124,7 +159,7 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False):
 
         episode_rewards.append(episode_reward)
         episode_lengths.append(steps)
-        if agent.shape_penalty > 0 and shape_violations_count > 0:
+        if (use_shape_guard_env or (hasattr(agent, 'shape_penalty') and agent.shape_penalty > 0)) and shape_violations_count > 0:
             violation_info = f", Violations = {shape_violations_count}, Corrective = {corrective_actions_count}, Total Penalty = {total_penalty:.2f}"
         else:
             violation_info = ""
@@ -405,38 +440,44 @@ def visualize_shape_self_fixing(shape_history, agent_name="Agent"):
 
 
 if __name__ == "__main__":
-    # Create environment to get action space
-    env = gym.make("gymtorax/IterHybrid-v0")
+    # Create environment to get action space (for agent initialization)
+    env_base = gym.make("gymtorax/IterHybrid-v0")
     
-    # Create random agent WITHOUT shape guard (baseline)
-    agent_no_guard = RandomAgent(
-        action_space=env.action_space,
+    # Create random agent (no shape guard needed - environment handles it)
+    agent = RandomAgent(
+        action_space=env_base.action_space,
+        shape_penalty=0.0,  # Not used when using shape guard environment
+    )
+    env_base.close()
+    
+    print("=" * 60)
+    print("Running WITHOUT shape guard (baseline - agent-based)")
+    print("=" * 60)
+    # Use agent-based shape guard for baseline
+    agent_baseline = RandomAgent(
+        action_space=env_base.action_space,
         shape_penalty=0.0,  # Shape guard OFF
     )
-    
-    # Create random agent WITH shape guard (safety enabled)
-    agent_with_guard = RandomAgent(
-        action_space=env.action_space,
-        shape_penalty=0.1,  # Penalty coefficient (reduced to avoid overwhelming reward)
-        damp_on_violation=True,  # Reduce action magnitude on violations
-        damp_factor=0.5,
+    rewards_no_guard, lengths_no_guard, _ = run(
+        agent_baseline, 
+        num_episodes=10, 
+        track_shape=False,
+        use_shape_guard_env=False
     )
     
-    print("=" * 60)
-    print("Running WITHOUT shape guard (baseline)")
-    print("=" * 60)
-    rewards_no_guard, lengths_no_guard, _ = run(agent_no_guard, num_episodes=10, track_shape=False)
-    
     print("\n" + "=" * 60)
-    print("Running WITH shape guard (safety enabled)")
+    print("Running WITH shape guard (environment-based)")
     print("=" * 60)
+    print("💡 Shape guard is now integrated into the environment!")
     print("💡 Interactive mode: Showing step-by-step shape guard behavior")
     print("=" * 60)
     rewards_with_guard, lengths_with_guard, shape_history = run(
-        agent_with_guard, 
+        agent, 
         num_episodes=3,  # Reduced for interactive viewing
         track_shape=True, 
-        interactive=True
+        interactive=True,
+        use_shape_guard_env=True,  # Use environment with integrated shape guard
+        shape_penalty=0.05
     )
     
     # Visualize shape self-fixing
@@ -457,5 +498,3 @@ if __name__ == "__main__":
     print(f"  Mean Reward: {np.mean(rewards_with_guard):.2f} ± {np.std(rewards_with_guard):.2f}")
     print(f"  Mean Steps:  {np.mean(lengths_with_guard):.1f} ± {np.std(lengths_with_guard):.1f}")
     print("=" * 60)
-    
-    env.close()
