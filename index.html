@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tokamak Viewer</title>
+    <style>
+      body { margin: 0; overflow: hidden; background: #000; }
+      canvas { display: block; }
+      #status {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        font-family: monospace;
+        font-size: 14px;
+        z-index: 1000;
+        background: rgba(0,0,0,0.7);
+        padding: 10px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="status">Initializing...</div>
+    <script>
+      // Immediate test - runs before module script
+      const statusDiv = document.getElementById("status");
+      if (statusDiv) {
+        statusDiv.textContent = "JavaScript loaded! Starting Three.js...";
+        console.log("Initial script running");
+      }
+    </script>
+    <script type="module">
+      // Make sure status div is accessible immediately
+      const statusDiv = document.getElementById("status");
+      function updateStatus(msg) {
+        if (statusDiv) {
+          statusDiv.textContent = msg;
+        }
+        console.log(msg);
+      }
+      
+      updateStatus("Loading Three.js...");
+      console.log("Module script started");
+      
+      import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+      import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js";
+      
+      updateStatus("Three.js loaded! Creating scene...");
+      console.log("Three.js imported successfully");
+
+      // ---- global state coming from the agent ----
+      const simState = {
+        betaN: 0.8,
+        q_min: 1.5,
+        q95: 4.0,
+        violation: 0.0,
+        ok: true,
+        in_box: true,
+        smooth: true,
+        step: 0,
+      };
+
+      // ---- basic scene setup ----
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera.position.set(0, -18, 6);    // looking into the torus
+      camera.lookAt(0, 0, 0);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setClearColor(0x000000);  // Black background
+      document.body.appendChild(renderer.domElement);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+
+      // Better lighting so we can see things
+      scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+      const pLight = new THREE.PointLight(0xffffff, 2.0);
+      pLight.position.set(0, 0, 10);
+      scene.add(pLight);
+      const pLight2 = new THREE.PointLight(0xffffff, 1.5);
+      pLight2.position.set(10, 0, 0);
+      scene.add(pLight2);
+
+      // ---- chamber walls: inside of a big cylinder ----
+      function createChamber() {
+        const radius = 12;
+        const height = 16;
+        const geom = new THREE.CylinderGeometry(radius, radius, height, 64, 1, true);
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0x5a5d63,
+          metalness: 0.4,
+          roughness: 0.8,
+          side: THREE.BackSide,  // we are inside the cylinder
+        });
+        const mesh = new THREE.Mesh(geom, mat);
+        scene.add(mesh);
+      }
+
+      // center column
+      function createCenterColumn() {
+        const geom = new THREE.CylinderGeometry(2.0, 2.0, 14, 48);
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0x3a3b3f,
+          metalness: 0.5,
+          roughness: 0.6,
+        });
+        const col = new THREE.Mesh(geom, mat);
+        scene.add(col);
+      }
+
+      // ---- plasma filaments on a torus path ----
+      const plasmaGroup = new THREE.Group();
+      scene.add(plasmaGroup);
+
+      const R = 7.0;  // major radius
+      const r = 1.8;  // minor radius
+
+      function createPlasmaTrack(phase) {
+        const points = [];
+        const segments = 260;
+        const twist = 3 + Math.floor(Math.random() * 3); // 3–5 wiggles
+
+        for (let i = 0; i <= segments; i++) {
+          const t = (i / segments) * Math.PI * 2.0;
+          const v = twist * t + phase;
+
+          const minor = r * (0.4 + 0.25 * Math.random());
+          const x = (R + minor * Math.cos(v)) * Math.cos(t);
+          const y = (R + minor * Math.cos(v)) * Math.sin(t);
+          const z = minor * Math.sin(v) * 0.7;
+
+          points.push(new THREE.Vector3(x, y, z));
+        }
+
+        const geom = new THREE.BufferGeometry().setFromPoints(points);
+        const mat = new THREE.LineBasicMaterial({
+          color: 0x3366ff,
+          transparent: true,
+          opacity: 0.6,
+        });
+
+        return new THREE.Line(geom, mat);
+      }
+
+      function createPlasmaBundle(nTracks = 80) {
+        for (let i = 0; i < nTracks; i++) {
+          const phase = Math.random() * Math.PI * 2;
+          const track = createPlasmaTrack(phase);
+          plasmaGroup.add(track);
+        }
+      }
+
+      // Create scene immediately after imports
+      try {
+        updateStatus("Creating 3D scene...");
+        createChamber();
+        createCenterColumn();
+        createPlasmaBundle();
+        updateStatus("✅ Scene ready! Connecting to server...");
+        
+        // Start animation immediately so we see something
+        animate();
+      } catch (e) {
+        updateStatus(`❌ Error: ${e.message}`);
+        console.error("Scene error:", e);
+      }
+
+      // ---- WebSocket: receive beta_N & shape_violation from Python ----
+      // expects messages like: {"beta_N": 2.1, "shape_violation": 0.3}
+      setTimeout(() => {
+        updateStatus("Connecting to WebSocket...");
+        const socket = new WebSocket("ws://localhost:8765");
+        socket.onopen = () => {
+          updateStatus("✅ Connected! Waiting for data...");
+          console.log("WebSocket connected");
+        };
+        socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (typeof data.beta_N === "number") simState.betaN = data.beta_N;
+            if (typeof data.q_min === "number") simState.q_min = data.q_min;
+            if (typeof data.q95 === "number") simState.q95 = data.q95;
+            if (typeof data.shape_violation === "number") simState.violation = data.shape_violation;
+            if (typeof data.ok === "boolean") simState.ok = data.ok;
+            if (typeof data.in_box === "boolean") simState.in_box = data.in_box;
+            if (typeof data.smooth === "boolean") simState.smooth = data.smooth;
+            if (typeof data.step === "number") simState.step = data.step;
+            updateStatus(`✅ Step ${simState.step} | β_N=${simState.betaN.toFixed(2)} | ${simState.ok ? '🟢 SAFE' : '🔴 VIOLATION'}`);
+          } catch (e) {
+            console.warn("Bad message", e);
+            updateStatus("❌ Error parsing data");
+          }
+        };
+        socket.onerror = (e) => {
+          updateStatus("❌ WebSocket error - Is server running?");
+          console.error("WebSocket error", e);
+        };
+        socket.onclose = () => {
+          updateStatus("❌ WebSocket disconnected");
+        };
+      }, 500); // Small delay to ensure scene is created first
+
+      // ---- animation loop ----
+      function animate() {
+        requestAnimationFrame(animate);
+
+        controls.update();
+
+        // make plasma "live"
+        const betaNorm = Math.min(simState.betaN / 3.0, 1.5);      // 0–~1.5
+        const violNorm = Math.min(simState.violation / 1.0, 1.0);  // 0–1
+
+        // Color based on status
+        let baseColor, violColor;
+        if (simState.ok) {
+          baseColor = new THREE.Color(0x00ffff);  // Cyan for safe
+          violColor = new THREE.Color(0x00ff88);  // Green
+        } else if (simState.in_box && !simState.smooth) {
+          baseColor = new THREE.Color(0xffaa00);  // Orange for rough
+          violColor = new THREE.Color(0xffcc00);
+        } else if (simState.violation < 0.5) {
+          baseColor = new THREE.Color(0xff6600);  // Orange for self-fixing
+          violColor = new THREE.Color(0xff8800);
+        } else {
+          baseColor = new THREE.Color(0xff0044);  // Red for violation
+          violColor = new THREE.Color(0xff3366);
+        }
+
+        plasmaGroup.rotation.z += 0.003;  // slow toroidal rotation
+
+        // Update plasma size based on beta_N
+        const sizeScale = 0.7 + 0.3 * betaNorm;
+        plasmaGroup.scale.set(sizeScale, sizeScale, sizeScale);
+
+        plasmaGroup.children.forEach((line, idx) => {
+          const mat = line.material;
+
+          // blend colors based on violation
+          const color = baseColor.clone().lerp(violColor, violNorm * 0.5);
+          mat.color.copy(color);
+
+          // brightness / opacity from beta_N
+          mat.opacity = 0.2 + 0.7 * betaNorm;
+
+          // dynamic movement
+          const jitter = 0.01 * Math.sin(performance.now() * 0.003 + idx);
+          line.rotation.z = jitter * (1 + violNorm);
+        });
+
+        renderer.render(scene, camera);
+      }
+
+      // Animation starts automatically when scene is created
+
+      // resize handling
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    </script>
+  </body>
+</html>

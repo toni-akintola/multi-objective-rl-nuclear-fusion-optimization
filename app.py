@@ -108,6 +108,137 @@ if "ready" in st.session_state and st.session_state.ready:
     shape_data = st.session_state.shape_data
     df = pd.DataFrame(shape_data)
     
+    # ========== TOKAMAK VISUALIZATION (TOP) ==========
+    st.subheader("🔥 Tokamak Plasma Shape Visualization")
+    st.markdown("Watch the plasma shape change in real-time inside the tokamak vessel")
+    
+    # Show diagnostics
+    if len(df) > 0:
+        in_box_count = df["in_box"].sum()
+        smooth_count = df["smooth"].sum()
+        ok_count = df["ok"].sum()
+        total = len(df)
+        
+        col_diag1, col_diag2, col_diag3, col_diag4 = st.columns(4)
+        with col_diag1:
+            st.metric("In Safe Box", f"{in_box_count}/{total}", f"{in_box_count/total*100:.1f}%")
+        with col_diag2:
+            st.metric("Smooth Changes", f"{smooth_count}/{total}", f"{smooth_count/total*100:.1f}%")
+        with col_diag3:
+            st.metric("Fully Safe (OK)", f"{ok_count}/{total}", f"{ok_count/total*100:.1f}%")
+        with col_diag4:
+            st.metric("Self-Fixing", f"{df['corrective'].sum()}/{total}", f"{df['corrective'].sum()/total*100:.1f}%")
+    
+    def draw_tokamak_plasma(beta_N, q_min, q95, ok, in_box, smooth, corrective, step_num, total_steps):
+        """Draw elegant tokamak with smooth swirling particle trails."""
+        fig = plt.figure(figsize=(14, 14), facecolor='#000011')
+        ax = fig.add_subplot(111, facecolor='#000011')
+        
+        R0, a0 = 0.0, 1.0
+        size_factor = 0.7 + (beta_N - 0.5) / (3.0 - 0.5) * 0.2
+        a = a0 * size_factor
+        elongation = 1.6 + (q95 - 3.0) / (5.0 - 3.0) * 0.2
+        triangularity = 0.45 + (1.0 - q_min) / (1.0 - 0.5) * 0.1
+        
+        theta = np.linspace(0, 2*np.pi, 600)
+        R_plasma = R0 + a * (np.cos(theta) + triangularity * np.cos(2*theta))
+        Z_plasma = a * elongation * np.sin(theta)
+        
+        # Elegant color schemes
+        if ok:
+            core_colors = ['#00ffff', '#00ffcc', '#66ffff']
+            trail_colors = ['#00aaff', '#00ffaa', '#88ffff']
+            status_text = "SAFE"
+        elif in_box and not smooth:
+            core_colors = ['#ffaa00', '#ffcc33', '#ffdd66']
+            trail_colors = ['#ff8800', '#ffaa33', '#ffcc66']
+            status_text = "IN BOX (ROUGH)"
+        elif corrective:
+            core_colors = ['#ff7700', '#ff9900', '#ffbb44']
+            trail_colors = ['#ff5500', '#ff8800', '#ffaa44']
+            status_text = "SELF-FIXING"
+        else:
+            core_colors = ['#ff0055', '#ff3377', '#ff6699']
+            trail_colors = ['#cc0033', '#ff3366', '#ff6688']
+            status_text = "VIOLATION"
+        
+        # Smooth particle trails - toroidal pattern
+        rotation = step_num * 0.12
+        num_trails = 100
+        
+        for i in range(num_trails):
+            phi = (i / num_trails) * 2 * np.pi + rotation
+            r_base = a * (0.9 + 0.2 * np.sin(i * 0.3))
+            
+            # Create smooth trail
+            n_points = 30
+            trail_x, trail_y = [], []
+            for j in range(n_points):
+                t = j / n_points
+                angle = phi + t * np.pi * 0.6
+                r = r_base * (1 - t * 0.15)
+                x = R0 + r * np.cos(angle)
+                y = r * elongation * np.sin(angle)
+                trail_x.append(x)
+                trail_y.append(y)
+            
+            # Draw smooth trail
+            color_idx = i % len(trail_colors)
+            for k in range(len(trail_x) - 1):
+                alpha = (1 - k / len(trail_x)) * 0.5
+                ax.plot([trail_x[k], trail_x[k+1]], [trail_y[k], trail_y[k+1]], 
+                       color=trail_colors[color_idx], linewidth=1.2, alpha=alpha, zorder=2)
+        
+        # Plasma core with smooth gradient
+        for scale, color, alpha_val in [(1.1, core_colors[0], 0.2), (1.05, core_colors[0], 0.3)]:
+            R_g = R0 + a * scale * (np.cos(theta) + triangularity * np.cos(2*theta))
+            Z_g = a * scale * elongation * np.sin(theta)
+            ax.fill(R_g, Z_g, color=color, alpha=alpha_val, zorder=3)
+        
+        ax.fill(R_plasma, Z_plasma, color=core_colors[0], alpha=0.65, zorder=4)
+        ax.fill(R0 + a * 0.75 * (np.cos(theta) + triangularity * np.cos(2*theta)),
+                a * 0.75 * elongation * np.sin(theta),
+                color=core_colors[1], alpha=0.8, zorder=5)
+        ax.fill(R0 + a * 0.5 * (np.cos(theta) + triangularity * np.cos(2*theta)),
+                a * 0.5 * elongation * np.sin(theta),
+                color=core_colors[2], alpha=0.95, zorder=6)
+        
+        ax.plot(R_plasma, Z_plasma, color=core_colors[0], linewidth=2.5, alpha=0.9, zorder=7)
+        
+        # Status
+        ax.text(0.5, 0.02, f"{status_text}  |  Step {step_num+1}/{total_steps}",
+               transform=ax.transAxes, fontsize=14, ha='center', fontweight='500',
+               color='white', zorder=10)
+        
+        ax.set_aspect('equal')
+        margin = 0.4
+        ax.set_xlim(R0 - a0 - margin, R0 + a0 + margin)
+        ax.set_ylim(-a0 * elongation - margin, a0 * elongation + margin)
+        ax.axis('off')
+        plt.tight_layout(pad=0)
+        return fig
+    
+    # Show current tokamak state
+    if len(df) > 0:
+        current_idx = len(df) - 1
+        current_row = df.iloc[current_idx]
+        tokamak_fig = draw_tokamak_plasma(
+            current_row["beta_N"],
+            current_row["q_min"],
+            current_row["q95"],
+            current_row["ok"],
+            current_row["in_box"],
+            current_row["smooth"],
+            current_row["corrective"],
+            current_idx,
+            len(df)
+        )
+        st.pyplot(tokamak_fig)
+        plt.close(tokamak_fig)
+    
+    st.markdown("---")
+    
+    # ========== EXISTING GRAPHS (BELOW) ==========
     # Main visualization area
     col1, col2 = st.columns(2)
     
@@ -264,6 +395,7 @@ if "ready" in st.session_state and st.session_state.ready:
     if start_animation and len(df) > 0:
         # Create animated plot
         placeholder = st.empty()
+        tokamak_placeholder = st.empty()
         
         # Prepare data
         beta_N = df["beta_N"].values
@@ -273,8 +405,28 @@ if "ready" in st.session_state and st.session_state.ready:
         corrective = df["corrective"].values
         safe = df["ok"].values
         
+        # Get constraints for animation
+        constraints = shape_guard
+        
         # Animate step by step
         for frame in range(len(df)):
+            # Update tokamak visualization
+            current_row = df.iloc[frame]
+            tokamak_fig = draw_tokamak_plasma(
+                current_row["beta_N"],
+                current_row["q_min"],
+                current_row["q95"],
+                current_row["ok"],
+                current_row["in_box"],
+                current_row["smooth"],
+                current_row["corrective"],
+                frame,
+                len(df)
+            )
+            tokamak_placeholder.pyplot(tokamak_fig)
+            plt.close(tokamak_fig)
+            
+            # Update trajectory plots
             fig_anim, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
             
             # Left: 2D trajectory
