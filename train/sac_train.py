@@ -21,6 +21,7 @@ class FlattenObsWrapper(gym.ObservationWrapper):
         super().__init__(env)
         self._orig_obs_space = env.observation_space
         self.observation_space = flatten_space(self._orig_obs_space)
+        
 
     def observation(self, obs):
         flattened = flatten(self._orig_obs_space, obs)
