@@ -1,7 +1,7 @@
 import numpy as np
 from gymtorax import reward as torax_reward  # your rewards.py snippet
 
-# --- "safe operating box" in (beta_N, q_min, q95) space ---
+# "safe operating box" ---
 BETA_N_MAX   = 3.0
 BETA_N_MIN   = 0.5   # too low = useless for power
 
