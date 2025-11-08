@@ -3,7 +3,7 @@ import gymtorax
 import numpy as np
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from agent import Agent
+from agent import Agent, RandomAgent
 
 
 def run(agent: Agent, num_episodes=10):
@@ -108,5 +108,6 @@ def run(agent: Agent, num_episodes=10):
 
 
 if __name__ == "__main__":
+    env = gym.make("gymtorax/IterHybrid-v0")
     # Run baseline with random actions
-    rewards, lengths = run(num_episodes=10)
+    rewards, lengths = run(agent=RandomAgent(action_space=env.action_space), num_episodes=10)

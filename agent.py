@@ -1,6 +1,7 @@
 import abc
 from gymnasium import spaces # Assuming a gym-like space object
 
+
 class Agent(abc.ABC):
     """
     Abstract base class for all agents.
@@ -54,3 +55,4 @@ class RandomAgent(Agent):
         
         action = self.action_space.sample()
         return action
+    
