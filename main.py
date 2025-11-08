@@ -19,7 +19,8 @@ shape_violation = shape_guard.shape_violation
 
 
 def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False, 
-        use_shape_guard_env=False, shape_penalty=0.05):
+        use_shape_guard_env=False, shape_penalty=0.05, vertical_penalty=0.05,
+        enable_vertical_guard=True):
     """Run agent for multiple episodes and track rewards.
     
     Args:
@@ -29,10 +30,17 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False,
         interactive: Whether to show step-by-step output
         use_shape_guard_env: Whether to use environment with integrated shape guard
         shape_penalty: Shape penalty coefficient (only used if use_shape_guard_env=True)
+        vertical_penalty: Vertical guard penalty coefficient (only used if use_shape_guard_env=True)
+        enable_vertical_guard: Whether to enable vertical guard (default: True)
     """
     # Create environment with or without shape guard
     if use_shape_guard_env:
-        env = make_iter_hybrid_shape_guard_env(shape_penalty=shape_penalty, enable_shape_guard=True)
+        env = make_iter_hybrid_shape_guard_env(
+            shape_penalty=shape_penalty, 
+            vertical_penalty=vertical_penalty,
+            enable_shape_guard=True,
+            enable_vertical_guard=enable_vertical_guard
+        )
     else:
         env = gym.make("gymtorax/IterHybrid-v0")
 
@@ -82,6 +90,11 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False,
                 shape_info = agent.last_shape_info
             else:
                 shape_info = None
+            
+            # Get vertical info from environment
+            vertical_info = None
+            if use_shape_guard_env and hasattr(env, 'vertical_info'):
+                vertical_info = env.vertical_info
             
             # Interactive step-by-step display
             if interactive and shape_info:
