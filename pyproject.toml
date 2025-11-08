@@ -7,4 +7,6 @@ requires-python = ">=3.12"
 dependencies = [
     "gymtorax>=0.1.1",
     "torax==1.0.3",
+    "matplotlib>=3.8.0",
+    "numpy>=1.26.0",
 ]
