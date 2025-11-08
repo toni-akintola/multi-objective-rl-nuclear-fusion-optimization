@@ -1,5 +1,5 @@
 import numpy as np
-from gymtorax import reward as torax_reward  # your rewards.py snippet
+from gymtorax import rewards as torax_reward  # your rewards.py snippet
 
 # "safe operating box" ---
 BETA_N_MAX   = 3.0
