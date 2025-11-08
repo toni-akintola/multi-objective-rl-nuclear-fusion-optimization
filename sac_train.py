@@ -7,6 +7,7 @@ from gymnasium.spaces import Dict as SpaceDict, Tuple as SpaceTuple, Box
 from gymnasium.spaces.utils import flatten_space, flatten, unflatten
 from stable_baselines3 import SAC
 from stable_baselines3.common.callbacks import CheckpointCallback, EvalCallback
+from stable_baselines3.common.evaluation import evaluate_policy
 import torch.nn as nn
 
 
@@ -25,7 +26,6 @@ class FlattenObsWrapper(gym.ObservationWrapper):
         flattened = flatten(self._orig_obs_space, obs)
         # Check for NaN/Inf in observations
         if np.any(~np.isfinite(flattened)):
-            print(f"WARNING: Non-finite values in observation: {flattened}")
             flattened = np.nan_to_num(flattened, nan=0.0, posinf=1e6, neginf=-1e6)
         return flattened
 
@@ -170,21 +170,6 @@ def main():
         import traceback
         traceback.print_exc()
         return
-
-    # Reload (must pass env when loading off-policy algs)
-    del model
-    model = SAC.load("sac_torax_flat", env=env)
-
-    print("\nRunning inference...")
-    obs, info = env.reset()
-    for _ in range(100):
-        action, _ = model.predict(obs, deterministic=True)
-        obs, reward, terminated, truncated, info = env.step(action)
-        print(f"Reward: {reward:.4f}")
-        if terminated or truncated:
-            obs, info = env.reset()
-            print("Episode finished, resetting...")
-
 
 if __name__ == "__main__":
     main()
