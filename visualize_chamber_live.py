@@ -29,6 +29,9 @@ class LiveTokamakChamber:
         self.num_trails = 300
         self.trails = []
         self.time = 0
+        self.prev_severity = float('inf')
+        self.is_corrective = False
+        self.violation_history = []
         self._init_trails()
     
     def _init_trails(self):
@@ -47,9 +50,20 @@ class LiveTokamakChamber:
                 'phase': np.random.random() * 2 * np.pi,
             })
     
-    def update_trails(self, beta_N, ok, violation):
+    def update_trails(self, beta_N, ok, violation, is_corrective=False):
         """Update trail colors and behavior based on state."""
         size_factor = 0.7 + (beta_N - 0.5) / (3.0 - 0.5) * 0.3
+        
+        # Track if severity is decreasing (self-fixing)
+        if violation < self.prev_severity and not ok:
+            is_corrective = True
+        self.prev_severity = violation
+        self.is_corrective = is_corrective
+        
+        # Store violation history for trend visualization
+        self.violation_history.append(violation)
+        if len(self.violation_history) > 50:
+            self.violation_history.pop(0)
         
         for trail in self.trails:
             trail['angle'] += trail['speed'] * size_factor
@@ -60,32 +74,35 @@ class LiveTokamakChamber:
             elif trail['z'] < -2:
                 trail['z'] = 2
             
-            # Update color based on status
+            # Update color based on status - emphasize self-fixing
             if ok:
                 trail['color'] = np.random.choice(['cyan', 'blue', 'green'], p=[0.4, 0.4, 0.2])
+            elif is_corrective:
+                # Self-fixing: bright orange/yellow with some green
+                trail['color'] = np.random.choice(['orange', 'yellow', 'lime'], p=[0.5, 0.3, 0.2])
             elif violation < 0.5:
                 trail['color'] = np.random.choice(['orange', 'yellow'], p=[0.7, 0.3])
             else:
                 trail['color'] = np.random.choice(['red', 'magenta', 'pink'], p=[0.5, 0.3, 0.2])
     
-    def draw(self, beta_N, q_min, q95, ok, violation):
+    def draw(self, beta_N, q_min, q95, ok, violation, in_box, smooth):
         """Draw the chamber."""
         self.ax.clear()
         self.ax.set_xlim(-12, 12)
-        self.ax.set_ylim(-8, 8)
+        self.ax.set_ylim(-10, 8)
         self.ax.set_aspect('equal')
         self.ax.axis('off')
         self.ax.set_facecolor('#0a0a0f')
         
-        # Chamber walls
+        # Chamber walls (outermost)
         chamber = Circle((0, 0), self.chamber_radius, 
                         fill=False, edgecolor='#3a3a4a', 
-                        linewidth=3, alpha=0.6)
+                        linewidth=3, alpha=0.6, zorder=1)
         self.ax.add_patch(chamber)
         
         inner = Circle((0, 0), self.chamber_radius * 0.9, 
                       fill=False, edgecolor='#2a2a3a', 
-                      linewidth=1, alpha=0.4, linestyle='--')
+                      linewidth=1, alpha=0.4, linestyle='--', zorder=1)
         self.ax.add_patch(inner)
         
         # Center column
@@ -96,17 +113,24 @@ class LiveTokamakChamber:
         self.ax.add_patch(center_col)
         
         # Update and draw trails
-        self.update_trails(beta_N, ok, violation)
+        self.update_trails(beta_N, ok, violation, self.is_corrective)
         size_factor = 0.7 + (beta_N - 0.5) / (3.0 - 0.5) * 0.3
         
+        # Draw plasma particles (the small dots) - these are individual charged particles
+        # swirling in the toroidal magnetic field
         for trail in self.trails:
             angle = trail['angle']
             radius = trail['radius'] * size_factor
             
+            # Keep particles within plasma boundary (use base radius for simplicity)
+            plasma_boundary_radius = 3 + (beta_N - 0.5) / (3.0 - 0.5) * 4
+            if radius > plasma_boundary_radius * 0.95:
+                radius = plasma_boundary_radius * 0.95
+            
             x = radius * np.cos(angle)
             y = radius * np.sin(angle)
             
-            # Draw trail streak
+            # Draw trail streak (particle movement trail)
             for i in range(5):
                 t = i / 5
                 prev_angle = angle - trail['speed'] * (1 - t) * 10
@@ -120,18 +144,107 @@ class LiveTokamakChamber:
                 self.ax.scatter(px, py, s=size, c=trail['color'], 
                               alpha=alpha, edgecolors='none', zorder=10)
             
-            # Main particle
+            # Main particle (charged particle in plasma)
             self.ax.scatter(x, y, s=30, c=trail['color'], 
                           alpha=0.9, edgecolors='white', 
                           linewidths=0.5, zorder=11)
         
         self.time += 0.1
         
-        # Status
-        status = "🟢 SAFE" if ok else ("🟠 SELF-FIXING" if violation < 0.5 else "🔴 VIOLATION")
-        self.ax.text(0, -10, f"{status} | β_N={beta_N:.2f} | q_min={q_min:.2f} | q95={q95:.2f}", 
-                    ha='center', va='top', fontsize=12, color='white',
-                    bbox=dict(boxstyle='round', facecolor='black', alpha=0.7))
+        # Status with self-fixing indicator
+        if ok:
+            status = "🟢 SAFE"
+            status_color = 'green'
+        elif self.is_corrective:
+            status = "🟠 SELF-FIXING! (Severity ↓)"
+            status_color = 'orange'
+        else:
+            status = "🔴 VIOLATION"
+            status_color = 'red'
+        
+        # Main status with explanation
+        status_text = f"{status} | β_N={beta_N:.2f} | q_min={q_min:.2f} | q95={q95:.2f}"
+        self.ax.text(0, -9, status_text, 
+                    ha='center', va='top', fontsize=13, color=status_color, weight='bold',
+                    bbox=dict(boxstyle='round', facecolor='black', alpha=0.8, edgecolor=status_color, linewidth=2))
+        
+        # Legend/explanation
+        legend_text = "D-shape = Plasma boundary (changes with β_N, q_min, q95) | Inner ring = Violation severity | Dots = Charged particles"
+        self.ax.text(0, -8.2, legend_text, 
+                    ha='center', va='top', fontsize=9, color='#888888', style='italic',
+                    bbox=dict(boxstyle='round', facecolor='black', alpha=0.5))
+        
+        # Detailed status
+        details = []
+        if not in_box:
+            details.append("⚠️ Out of safe box")
+        if not smooth:
+            details.append("⚠️ Rough changes")
+        if details:
+            self.ax.text(0, -10.5, " | ".join(details), 
+                        ha='center', va='top', fontsize=10, color='yellow',
+                        bbox=dict(boxstyle='round', facecolor='black', alpha=0.6))
+        
+        # Plasma boundary - represents the actual plasma shape
+        # Shape changes based on beta_N (size), q_min (triangularity), q95 (elongation)
+        base_radius = 3 + (beta_N - 0.5) / (3.0 - 0.5) * 4  # Size with beta_N
+        elongation = 1.0 + (q95 - 3.0) / (5.0 - 3.0) * 0.3  # Vertical stretch with q95
+        triangularity = 0.0 + (1.0 - q_min) / (1.0 - 0.5) * 0.2  # D-shape with q_min
+        
+        # Create plasma boundary shape (D-shaped, elongated)
+        theta = np.linspace(0, 2 * np.pi, 100)
+        # D-shape: R = R0 + a * (cos(theta) + triangularity * cos(2*theta))
+        R0 = 0.0  # Center
+        a = base_radius
+        R_plasma = R0 + a * (np.cos(theta) + triangularity * np.cos(2*theta))
+        Z_plasma = a * elongation * np.sin(theta)
+        
+        # Draw plasma boundary
+        self.ax.plot(R_plasma, Z_plasma, color=status_color, 
+                    linewidth=3, alpha=0.9, linestyle='-', zorder=3, label='Plasma boundary')
+        
+        # Violation severity indicator ring (inside plasma boundary)
+        # Shows how close we are to violating constraints
+        if len(self.violation_history) > 5:
+            # Create circular ring based on violation history
+            n_points = len(self.violation_history)
+            angles = np.linspace(0, 2 * np.pi, n_points)
+            
+            # Scale radius based on violation severity (larger = more violation)
+            # Place ring inside the plasma boundary
+            plasma_boundary_radius = 3 + (beta_N - 0.5) / (3.0 - 0.5) * 4
+            base_radius = plasma_boundary_radius * 0.6  # Start at 60% of plasma radius
+            radii = base_radius + np.array(self.violation_history) * 1.2
+            # Clamp to stay inside plasma
+            radii = np.clip(radii, base_radius * 0.4, plasma_boundary_radius * 0.9)
+            
+            # Convert to x, y coordinates
+            trend_x = radii * np.cos(angles)
+            trend_y = radii * np.sin(angles)
+            
+            # Draw severity indicator ring (inside plasma, behind particles)
+            self.ax.plot(trend_x, trend_y, color=status_color, linewidth=2, alpha=0.6, zorder=2)
+            
+            # Fill area to show severity
+            base_x = base_radius * np.cos(angles)
+            base_y = base_radius * np.sin(angles)
+            for i in range(len(angles) - 1):
+                self.ax.fill([base_x[i], base_x[i+1], trend_x[i+1], trend_x[i]], 
+                           [base_y[i], base_y[i+1], trend_y[i+1], trend_y[i]], 
+                           color=status_color, alpha=0.1, zorder=2)
+            
+            # Show if trend is improving
+            if len(self.violation_history) > 10:
+                recent_avg = np.mean(self.violation_history[-5:])
+                older_avg = np.mean(self.violation_history[-15:-5])
+                if recent_avg < older_avg:
+                    self.ax.text(0, -11, "↓ Improving", fontsize=9, color='lime', 
+                               weight='bold', ha='center', 
+                               bbox=dict(boxstyle='round', facecolor='black', alpha=0.6))
+                elif recent_avg > older_avg:
+                    self.ax.text(0, -11, "↑ Worsening", fontsize=9, color='red', 
+                               weight='bold', ha='center',
+                               bbox=dict(boxstyle='round', facecolor='black', alpha=0.6))
 
 
 def run_live_visualization():
@@ -170,12 +283,22 @@ def run_live_visualization():
             q95 = float(shape_info["shape"][2])
             violation = float(shape_info["severity"])
             ok = shape_info["ok"]
+            in_box = shape_info["in_box"]
+            smooth = shape_info["smooth"]
             
-            chamber.draw(beta_N, q_min, q95, ok, violation)
+            # Check if this is a corrective action
+            was_in_violation = (hasattr(chamber, 'prev_severity') and 
+                              chamber.prev_severity != float('inf') and 
+                              not (ok and chamber.prev_severity == 0))
+            is_corrective = False
+            if was_in_violation and not ok:
+                is_corrective = violation < chamber.prev_severity
+            
+            chamber.draw(beta_N, q_min, q95, ok, violation, in_box, smooth)
             
             if step_count % 10 == 0:
-                status = "🟢 SAFE" if ok else ("🟠 SELF-FIXING" if violation < 0.5 else "🔴 VIOLATION")
-                print(f"Step {step_count}: {status} | β_N={beta_N:.2f} | violation={violation:.3f}")
+                status = "🟢 SAFE" if ok else ("🟠 SELF-FIXING" if is_corrective else "🔴 VIOLATION")
+                print(f"Step {step_count}: {status} | β_N={beta_N:.2f} | violation={violation:.3f} | in_box={in_box} | smooth={smooth}")
         
         step_count += 1
         
