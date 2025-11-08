@@ -1,4 +1,4 @@
-# eval_random_torax.py
+# eval_sac_torax.py
 import argparse
 import numpy as np
 import gymnasium as gym
@@ -6,10 +6,12 @@ import gymtorax  # registers envs
 from gymnasium.spaces import Dict as SpaceDict, Tuple as SpaceTuple, Box
 from gymnasium.spaces.utils import flatten_space, flatten, unflatten
 
+from stable_baselines3 import SAC
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
+import torch.nn as nn
 
-# ---------- Wrappers (identical to your train/eval) ----------
+
+# ---------- Wrappers (same as training) ----------
 class FlattenObsWrapper(gym.ObservationWrapper):
     def __init__(self, env):
         super().__init__(env)
@@ -41,6 +43,7 @@ class FlattenActionWrapper(gym.ActionWrapper):
 
 
 class NormalizeObservation(gym.ObservationWrapper):
+    """Running-stats normalization; can be frozen for eval."""
     def __init__(self, env, epsilon=1e-8, update_stats=True):
         super().__init__(env)
         self.epsilon = epsilon
@@ -51,6 +54,14 @@ class NormalizeObservation(gym.ObservationWrapper):
 
     def freeze(self):   self.update_stats = False
     def unfreeze(self): self.update_stats = True
+
+    def get_state(self):
+        return dict(mean=self.obs_mean.copy(), var=self.obs_var.copy(), count=float(self.obs_count))
+
+    def set_state(self, state):
+        self.obs_mean  = state["mean"].copy()
+        self.obs_var   = state["var"].copy()
+        self.obs_count = float(state["count"])
 
     def observation(self, obs):
         if self.update_stats:
@@ -73,7 +84,6 @@ def make_env(normalize=True):
         env = FlattenObsWrapper(env)
     if normalize:
         env = NormalizeObservation(env)
-        env.freeze()  # freeze stats for fair eval
     if isinstance(env.action_space, (SpaceDict, SpaceTuple)) or not isinstance(env.action_space, Box):
         env = FlattenActionWrapper(env)
     assert isinstance(env.observation_space, Box)
@@ -81,56 +91,47 @@ def make_env(normalize=True):
     return env
 
 
-# ---------- Random policy that handles vec obs ----------
-class RandomPolicy:
-    """
-    SB3-compatible .predict(). If obs is batched (n_envs, obs_dim),
-    return a batch of actions (n_envs, act_dim).
-    """
-    def __init__(self, action_space, seed=None):
-        self.action_space = action_space
-        if seed is not None:
-            # Gymnasium spaces have their own RNG; this seeds numpy for any local use
-            np.random.seed(seed)
-
-    def predict(self, obs, state=None, episode_start=None, deterministic=False):
-        # Vectorized obs: (n_envs, ...) -> return (n_envs, act_dim)
-        if isinstance(obs, np.ndarray) and obs.ndim >= 2:
-            n_envs = obs.shape[0]
-            acts = [self.action_space.sample() for _ in range(n_envs)]
-            return np.stack(acts), None
-        # Single obs
-        return self.action_space.sample(), None
+def find_wrapper(env, wrapper_type):
+    cur = env
+    while isinstance(cur, gym.Wrapper):
+        if isinstance(cur, wrapper_type):
+            return cur
+        cur = cur.env
+    return None
 
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--model", type=str, default="sac_torax_flat.zip")
     ap.add_argument("--episodes", type=int, default=10)
-    ap.add_argument("--seed", type=int, default=None)
+    ap.add_argument("--det", action="store_true", help="deterministic policy")
     args = ap.parse_args()
 
-    # Build a *vectorized* env with monitor to satisfy evaluate_policy expectations
-    vec_env = DummyVecEnv([lambda: make_env(normalize=True)])
-    vec_env = VecMonitor(vec_env)
+    # Build eval env and load model
+    eval_env = make_env(normalize=True)
+    model = SAC.load(args.model, env=eval_env, device="auto")
 
-    if args.seed is not None:
-        try:
-            vec_env.seed(args.seed)
-        except Exception:
-            pass
+    # Freeze normalization (use the stats as-is for fair eval)
+    norm = find_wrapper(eval_env, NormalizeObservation)
+    if norm is not None:
+        norm.freeze()
 
-    model = RandomPolicy(vec_env.action_space, seed=args.seed)
-
-    print(f"\nEvaluating RANDOM policy for {args.episodes} episodes...")
-    mean_r, std_r = evaluate_policy(model, vec_env, n_eval_episodes=args.episodes, deterministic=False)
+    # Evaluate
+    print(f"\nEvaluating {args.model} for {args.episodes} episodes (deterministic={args.det})...")
+    mean_r, std_r = evaluate_policy(model, eval_env, n_eval_episodes=args.episodes, deterministic=args.det)
     print(f"Mean episodic return: {mean_r:.4f} ± {std_r:.4f}")
 
     ep_rewards, ep_lengths = evaluate_policy(
-        model, vec_env, n_eval_episodes=args.episodes, deterministic=False, return_episode_rewards=True
+        model,
+        eval_env,
+        n_eval_episodes=args.episodes,
+        deterministic=args.det,
+        return_episode_rewards=True,
     )
     print("Per-episode returns:", [f"{r:.4f}" for r in ep_rewards])
     print("Per-episode lengths:", ep_lengths)
     print(f"Avg length: {np.mean(ep_lengths):.1f} ± {np.std(ep_lengths):.1f}")
+
 
 
 if __name__ == "__main__":
