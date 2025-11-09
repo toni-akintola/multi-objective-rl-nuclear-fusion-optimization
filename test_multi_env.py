@@ -3,6 +3,7 @@ import numpy as np
 import gymtorax
 import time
 
+
 def benchmark_parallel_envs():
     print("\nParallel envs")
     start = time.time()
@@ -13,6 +14,7 @@ def benchmark_parallel_envs():
     _ = envs.step(envs.action_space.sample())
     print(f"Step time: {time.time() - start}")
     envs.close()
+
 
 def benchmark_single_env():
     print("\nSingle env")
@@ -30,7 +32,7 @@ if __name__ == "__main__":
     import gymnasium as gym
 
     # Interactive visualization
-    env = gym.make('gymtorax/IterHybrid-v0', render_mode="human")
+    env = gym.make("gymtorax/IterHybrid-v0", render_mode="human")
     obs, info = env.reset()
 
     terminated = False
@@ -41,4 +43,3 @@ if __name__ == "__main__":
 
         if terminated or truncated:
             break
-

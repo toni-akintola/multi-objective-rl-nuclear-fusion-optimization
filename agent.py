@@ -1,16 +1,17 @@
 import abc
-from gymnasium import spaces # Assuming a gym-like space object
+from gymnasium import spaces  # Assuming a gym-like space object
 import importlib.util
 from pathlib import Path
 
 # Import shape guard module
 spec = importlib.util.spec_from_file_location(
     "shape_guard",
-    Path(__file__).parent / "optimization-for-constraints" / "shape_guard.py"
+    Path(__file__).parent / "optimization-for-constraints" / "shape_guard.py",
 )
 shape_guard = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(shape_guard)
 shape_violation = shape_guard.shape_violation
+
 
 class Agent(abc.ABC):
     """
@@ -29,24 +30,24 @@ class Agent(abc.ABC):
         """
         self.action_space = action_space
         self.shape_penalty = shape_penalty
-        
+
         # For shape safety
         self.prev_state: dict | None = None
         self.last_shape_info: dict | None = None
-    
+
     def reset_state(self, state: dict | None):
         """Call this at env.reset() to initialize tracking."""
         self.prev_state = state
         self.last_shape_info = None
-    
+
     def apply_shape_safety(self, reward: float, state: dict | None) -> float:
         """
         Call this AFTER env.step().
-        
+
         Allows corrective violations: if we're already in violation, we allow
         violations that reduce severity (corrective actions). Only penalizes
         violations that make things worse or occur when we were safe.
-        
+
         Returns:
             new_reward: original reward + (possibly negative) shape penalty.
         """
@@ -54,30 +55,32 @@ class Agent(abc.ABC):
             # nothing to do
             self.prev_state = state
             return reward
-        
+
         info = shape_violation(self.prev_state, state)
-        
+
         # Check if this is a corrective action
-        was_in_violation = (self.last_shape_info is not None and 
-                           not self.last_shape_info.get("ok", True))
+        was_in_violation = (
+            self.last_shape_info is not None
+            and not self.last_shape_info.get("ok", True)
+        )
         is_corrective = False
-        
+
         if was_in_violation and not info["ok"]:
             # We were in violation, and still are - but is severity decreasing?
-            prev_severity = self.last_shape_info.get("severity", float('inf'))
+            prev_severity = self.last_shape_info.get("severity", float("inf"))
             current_severity = info.get("severity", 0.0)
             is_corrective = current_severity < prev_severity
-        
+
         self.last_shape_info = info
         self.prev_state = state
-        
+
         # Only penalize if:
         # 1. We're violating AND it's not a corrective action (severity decreasing)
         # 2. We went from safe to violation (new violation)
         if not info["ok"] and not is_corrective:
             penalty = self.shape_penalty * (1.0 + info["severity"])
             return reward - penalty
-        
+
         # If corrective, we might even give a small bonus (optional)
         # For now, just don't penalize corrective actions
         return reward
@@ -95,18 +98,22 @@ class Agent(abc.ABC):
         Returns:
             dict: Action dictionary for the environment.
         """
-        pass # The implementation is left to the child class
-    
+        pass  # The implementation is left to the child class
+
+
 class RandomAgent(Agent):
     """Agent that produces random actions within the action space.
-    
+
     This agent inherits the __init__ method from the base Agent class.
     """
 
-    def __init__(self, action_space: spaces.Space,
-                 shape_penalty: float = 0.0,
-                 damp_on_violation: bool = False,
-                 damp_factor: float = 0.5):
+    def __init__(
+        self,
+        action_space: spaces.Space,
+        shape_penalty: float = 0.0,
+        damp_on_violation: bool = False,
+        damp_factor: float = 0.5,
+    ):
         super().__init__(action_space, shape_penalty=shape_penalty)
         self.damp_on_violation = damp_on_violation
         self.damp_factor = damp_factor
@@ -114,10 +121,10 @@ class RandomAgent(Agent):
     def act(self, observation) -> dict:
         """
         Compute a (possibly shape-aware) random action.
-        
+
         If damp_on_violation=True and last_shape_info indicates
         a problem, we shrink the magnitude of the sampled action.
-        
+
         Args:
             observation: The current observation (unused by this agent).
 
@@ -125,9 +132,9 @@ class RandomAgent(Agent):
             dict: A random action dictionary.
         """
         _ = observation  # unused
-        
+
         action = self.action_space.sample()
-        
+
         if self.damp_on_violation and self.last_shape_info is not None:
             if not self.last_shape_info["ok"]:
                 # Example: scale numeric entries if action is a dict
@@ -140,5 +147,5 @@ class RandomAgent(Agent):
                 else:
                     # assume action is np.ndarray-like
                     action = self.damp_factor * action
-        
+
         return action
