@@ -140,7 +140,7 @@ export function FusionHeroSection() {
           <span className="text-balance">
             Controlling
             <br />
-            limitless energy
+            limitless energy.
           </span>
         </h1>
         <p className="mb-8 mx-auto max-w-xl animate-in fade-in slide-in-from-bottom-4 text-lg leading-relaxed text-foreground/80 duration-1000 delay-200 md:text-xl">

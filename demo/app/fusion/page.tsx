@@ -8,6 +8,7 @@ import { ProblemSection } from "@/components/sections/problem-section"
 import { SolutionSection } from "@/components/sections/solution-section"
 import { ApproachSection } from "@/components/sections/approach-section"
 import { PlasmaSection } from "@/components/sections/plasma-section"
+import { ReferencesSection } from "@/components/sections/references-section"
 import { Navigation } from "@/components/navigation"
 import { useRef, useEffect, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
@@ -29,7 +30,7 @@ function FusionPageContent() {
   const touchStartX = useRef(0)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
   const scrollThrottleRef = useRef<number | undefined>(undefined)
-  const sections = [FusionHeroSection, ProblemSection, SolutionSection, ApproachSection, PlasmaSection]
+  const sections = [FusionHeroSection, ProblemSection, SolutionSection, ApproachSection, PlasmaSection, ReferencesSection]
   const searchParams = useSearchParams()
 
   // Read section from URL on mount

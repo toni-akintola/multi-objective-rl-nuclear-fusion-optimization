@@ -36,13 +36,13 @@ export function ReferencesSection() {
           title: "TORAX: A Transport Solver for Tokamak Plasmas",
           authors: "TORAX Team",
           venue: "Google Research",
-          link: "https://github.com/google/torax",
+          link: "https://github.com/google-deepmind/torax",
         },
         {
           title: "gym-TORAX: Reinforcement Learning Environment for Tokamak Control",
           authors: "gym-TORAX Contributors",
           venue: "Open Source",
-          link: "https://github.com/google-research/gym-torax",
+          link: "https://github.com/antoine-mouchamps/gymtorax",
         },
       ],
     },
@@ -56,10 +56,10 @@ export function ReferencesSection() {
           link: "https://arxiv.org/abs/2005.01643",
         },
         {
-          title: "Offline RL for Real-World Applications",
-          authors: "Agarwal et al.",
-          venue: "NeurIPS 2020",
-          link: "https://arxiv.org/abs/2006.04779",
+          title: "Challenges and Opportunities in Offline Reinforcement Learning from Visual Observations",
+          authors: "Namibiar et al.",
+          venue: "TLMR 2023",
+          link: "https://arxiv.org/abs/2206.04779",
         },
       ],
     },
@@ -68,15 +68,15 @@ export function ReferencesSection() {
       items: [
         {
           title: "Plasma Shape Control in Tokamaks",
-          authors: "Various",
-          venue: "Fusion Engineering and Design",
-          link: "https://www.sciencedirect.com/topics/engineering/plasma-shape-control",
+          authors: "Mele et al.",
+          venue: "CCTA 2025",
+          link: "https://arxiv.org/abs/2506.20096",
         },
         {
-          title: "Real-Time Control of Tokamak Plasmas",
-          authors: "Various",
-          venue: "Nuclear Fusion",
-          link: "https://iopscience.iop.org/journal/0029-5515",
+          title: "Magnetic control of tokamak plasmas through deep reinforcement learning",
+          authors: "De Grave et al.",
+          venue: "Nature",
+          link: "https://www.nature.com/articles/s41586-021-04301-9",
         },
       ],
     },
@@ -116,13 +116,10 @@ export function ReferencesSection() {
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
-          <p className="mb-4 font-mono text-sm text-accent md:text-base">/ REFERENCES</p>
+          <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 05. REFERENCES</p>
           <h2 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
             <span className="text-balance">Citations & Resources</span>
           </h2>
-          <p className="max-w-2xl text-foreground/70 md:text-lg">
-            Papers, codebases, and resources that this work builds upon.
-          </p>
         </div>
 
         <div className="space-y-12">

@@ -11,19 +11,14 @@ export function PlasmaSection() {
         {/* Header */}
         <div
           ref={revealRef as React.RefObject<HTMLDivElement>}
-          className={`mb-8 text-center transition-all duration-700 sm:mb-10 md:mb-12 lg:mb-16 ${
+          className={`mb-8 transition-all duration-700 md:mb-12 ${
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
-          <div className="mb-3 inline-block rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1 backdrop-blur-md sm:mb-4 sm:px-4 sm:py-1.5">
-            <p className="font-mono text-xs text-foreground/90 sm:text-sm">Safety Monitoring Systems</p>
-          </div>
-          <h1 className="mb-3 font-sans text-4xl font-light leading-tight text-foreground sm:text-5xl sm:mb-4 md:text-6xl lg:text-7xl">
-            Plasma Shape Monitoring
-          </h1>
-          <p className="max-w-2xl mx-auto text-base leading-relaxed text-foreground/70 sm:text-lg md:text-xl lg:text-xl">
-            Continuous monitoring of critical plasma parameters to prevent disruptions and ensure safe operation
-          </p>
+          <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 04. PLASMA MONITORING</p>
+          <h2 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
+            <span className="text-balance">Plasma Shape Monitoring</span>
+          </h2>
         </div>
 
         {/* Content Layout */}

@@ -11,8 +11,8 @@ interface NavigationProps {
 export function Navigation({ isLoaded, variant = "home" }: NavigationProps) {
   const pathname = usePathname()
   const logoConfig = variant === "fusion" 
-    ? { symbol: "ϕ", title: "Fusion Lab" }
-    : { symbol: "ϕ", title: "Fusion Lab" }
+    ? { symbol: "Q", title: "QStable" }
+    : { symbol: "Q", title: "QStable" }
 
   const navItems = [
     { label: "Problem", type: "link", href: "/problem" },
