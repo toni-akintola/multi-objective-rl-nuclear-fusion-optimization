@@ -257,13 +257,6 @@ function FusionPageContent() {
         <div className="absolute inset-0 bg-black/20" />
       </div>
 
-      <Navigation
-        isLoaded={isLoaded}
-        currentSection={currentSection}
-        onSectionClick={scrollToSection}
-        variant="fusion"
-      />
-
       <div
         ref={scrollContainerRef}
         data-scroll-container
@@ -276,6 +269,10 @@ function FusionPageContent() {
           scrollBehavior: "smooth"
         }}
       >
+        <Navigation
+          isLoaded={isLoaded}
+          variant="fusion"
+        />
         {sections.map((Section, index) => (
           <div 
             key={index} 

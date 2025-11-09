@@ -83,12 +83,11 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/20" />
       </div>
 
-      <Navigation
-        isLoaded={isLoaded}
-        variant="home"
-      />
-
       <div className="relative z-10 h-screen overflow-y-auto">
+        <Navigation
+          isLoaded={isLoaded}
+          variant="home"
+        />
         <FusionHeroSection />
       </div>
 
