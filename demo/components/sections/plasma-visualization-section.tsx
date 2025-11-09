@@ -18,12 +18,12 @@ export function PlasmaVisualizationSection() {
               const response = await fetch("/api/launch-python")
               const data = await response.json()
               if (data.success) {
-                alert("Visualization launched! A matplotlib window should open showing the live chamber simulation.")
+                alert("Visualization launched! A window should open showing the live chamber simulation.")
               } else {
                 alert(`Error: ${data.error}`)
               }
             } catch (error) {
-              alert("Failed to launch visualization. Make sure Python and dependencies are installed.")
+              alert("Failed to launch visualization. Please ensure dependencies are installed.")
             }
           }}
         >

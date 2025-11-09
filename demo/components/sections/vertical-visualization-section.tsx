@@ -18,12 +18,12 @@ export function VerticalVisualizationSection() {
               const response = await fetch("/api/launch-vertical")
               const data = await response.json()
               if (data.success) {
-                alert("Rotating 3D vertical guard visualization launched! A matplotlib window should open showing plasma vertical position with interactive coil disable/enable controls.")
+                alert("Rotating 3D vertical guard visualization launched! A window should open showing plasma vertical position with interactive coil controls.")
               } else {
                 alert(`Error: ${data.error}`)
               }
             } catch (error) {
-              alert("Failed to launch visualization. Make sure Python and dependencies are installed.")
+              alert("Failed to launch visualization. Please ensure dependencies are installed.")
             }
           }}
         >
