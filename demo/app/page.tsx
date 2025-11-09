@@ -7,6 +7,7 @@ import { FusionHeroSection } from "@/components/sections/fusion-hero"
 import { ProblemSection } from "@/components/sections/problem-section"
 import { SolutionSection } from "@/components/sections/solution-section"
 import { ApproachSection } from "@/components/sections/approach-section"
+import { PlasmaSection } from "@/components/sections/plasma-section"
 import { Navigation } from "@/components/navigation"
 import { useRef, useEffect, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
@@ -27,8 +28,8 @@ function HomeContent() {
   const touchStartY = useRef(0)
   const touchStartX = useRef(0)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
-  const scrollThrottleRef = useRef<number>()
-  const sections = [FusionHeroSection, ProblemSection, SolutionSection, ApproachSection]
+  const scrollThrottleRef = useRef<number | undefined>(undefined)
+  const sections = [FusionHeroSection, ProblemSection, SolutionSection, ApproachSection, PlasmaSection]
   const searchParams = useSearchParams()
 
   // Read section from URL on mount
@@ -40,9 +41,9 @@ function HomeContent() {
         setCurrentSection(sectionIndex)
         // Scroll to section
         if (scrollContainerRef.current) {
-          const sectionWidth = scrollContainerRef.current.offsetWidth
+          const sectionHeight = scrollContainerRef.current.offsetHeight
           scrollContainerRef.current.scrollTo({
-            left: sectionWidth * sectionIndex,
+            top: sectionHeight * sectionIndex,
             behavior: "instant",
           })
         }
@@ -82,9 +83,9 @@ function HomeContent() {
 
   const scrollToSection = useCallback((index: number) => {
     if (scrollContainerRef.current) {
-      const sectionWidth = scrollContainerRef.current.offsetWidth
+      const sectionHeight = scrollContainerRef.current.offsetHeight
       scrollContainerRef.current.scrollTo({
-        left: sectionWidth * index,
+        top: sectionHeight * index,
         behavior: "smooth",
       })
       setCurrentSection(index)
@@ -140,38 +141,6 @@ function HomeContent() {
   }, [currentSection, sections.length, scrollToSection])
 
   useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault()
-
-        if (!scrollContainerRef.current) return
-
-        scrollContainerRef.current.scrollBy({
-          left: e.deltaY,
-          behavior: "instant",
-        })
-
-        const sectionWidth = scrollContainerRef.current.offsetWidth
-        const newSection = Math.round(scrollContainerRef.current.scrollLeft / sectionWidth)
-        if (newSection !== currentSection) {
-          setCurrentSection(newSection)
-        }
-      }
-    }
-
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener("wheel", handleWheel, { passive: false })
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("wheel", handleWheel)
-      }
-    }
-  }, [currentSection, sections.length, scrollToSection])
-
-  useEffect(() => {
     const handleScroll = () => {
       if (scrollThrottleRef.current) return
 
@@ -181,12 +150,17 @@ function HomeContent() {
           return
         }
 
-        const sectionWidth = scrollContainerRef.current.offsetWidth
-        const scrollLeft = scrollContainerRef.current.scrollLeft
-        const newSection = Math.round(scrollLeft / sectionWidth)
+        const sectionHeight = scrollContainerRef.current.offsetHeight
+        const scrollTop = scrollContainerRef.current.scrollTop
+        const newSection = Math.round(scrollTop / sectionHeight)
 
         if (newSection !== currentSection && newSection >= 0 && newSection < sections.length) {
           setCurrentSection(newSection)
+          
+          // Update URL with section parameter
+          const url = new URL(window.location.href)
+          url.searchParams.set('section', newSection.toString())
+          window.history.pushState({}, '', url)
         }
 
         scrollThrottleRef.current = undefined
@@ -206,7 +180,8 @@ function HomeContent() {
         cancelAnimationFrame(scrollThrottleRef.current)
       }
     }
-  }, [currentSection, sections.length, scrollToSection])
+  }, [currentSection, sections.length])
+
 
 
   return (
@@ -259,13 +234,23 @@ function HomeContent() {
       <div
         ref={scrollContainerRef}
         data-scroll-container
-        className={`relative z-10 flex h-screen overflow-x-auto overflow-y-hidden transition-opacity duration-700 ${
+        className={`relative z-10 flex flex-col h-screen overflow-y-auto overflow-x-hidden transition-opacity duration-700 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
-        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        style={{ 
+          scrollbarWidth: "none", 
+          msOverflowStyle: "none",
+          scrollSnapType: "y mandatory",
+          scrollBehavior: "smooth",
+          WebkitOverflowScrolling: "touch"
+        }}
       >
         {sections.map((Section, index) => (
-          <div key={index} className="min-h-screen w-screen shrink-0">
+          <div 
+            key={index} 
+            className="h-screen w-screen shrink-0 flex-shrink-0"
+            style={{ scrollSnapAlign: "start", scrollSnapStop: "always", minHeight: "100vh" }}
+          >
             <Section />
           </div>
         ))}

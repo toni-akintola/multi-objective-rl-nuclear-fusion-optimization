@@ -195,7 +195,7 @@ export default function ChamberPage() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          {["Problem", "Solution", "Approach", "Plasma", "Vertical", "Insights"].map((item, index) => {
+          {["Problem", "Solution", "Approach", "Plasma"].map((item, index) => {
             // Plasma is active on this page
             if (item === "Plasma") {
               return (
@@ -208,25 +208,11 @@ export default function ChamberPage() {
                 </button>
               )
             }
-            // Vertical links to vertical-vis page
-            if (item === "Vertical") {
-              return (
-                <Link
-                  key={item}
-                  href="/vertical-vis"
-                  className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
-                >
-                  {item}
-                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
-                </Link>
-              )
-            }
             // Map to fusion page sections
             const sectionMap: Record<string, number> = {
               "Problem": 1,
               "Solution": 2,
-              "Approach": 3,
-              "Insights": 3
+              "Approach": 3
             }
             const sectionIndex = sectionMap[item] ?? 0
             return (

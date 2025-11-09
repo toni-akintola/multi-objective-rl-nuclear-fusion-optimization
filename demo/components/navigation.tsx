@@ -18,9 +18,7 @@ export function Navigation({ isLoaded, currentSection = 0, onSectionClick, varia
     { label: "Problem", type: "section", index: 1 },
     { label: "Solution", type: "section", index: 2 },
     { label: "Approach", type: "section", index: 3 },
-    { label: "Plasma", type: "link", href: "/chamber" },
-    { label: "Vertical", type: "link", href: "/vertical-vis" },
-    { label: "Insights", type: "section", index: 3 },
+    { label: "Plasma", type: "section", index: 4 },
   ]
 
   return (
@@ -41,7 +39,7 @@ export function Navigation({ isLoaded, currentSection = 0, onSectionClick, varia
 
       <div className="hidden items-center gap-8 md:flex">
         {navItems.map((item) => {
-          if (item.type === "link" && item.href) {
+          if (item.type === "link" && "href" in item && item.href) {
             return (
               <Link
                 key={item.label}

@@ -1,8 +1,6 @@
 "use client"
 
 import { MagneticButton } from "@/components/magnetic-button"
-import { Tokamak2D } from "@/components/tokamak-2d"
-import { TokamakParticles } from "@/components/tokamak-particles"
 import { Tokamak3DR3F } from "@/components/tokamak-3d-r3f"
 import { useState } from "react"
 
@@ -162,16 +160,18 @@ export function FusionHeroSection() {
         </div>
         
         {result && (
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 mx-auto max-w-4xl space-y-4">
             {/* React Three Fiber 3D Visualization */}
-            <Tokamak3DR3F 
-              observation={result.observation_raw || null}
-              action={result.action}
-              step={result.episode_step}
-            />
+            <div className="flex justify-center">
+              <Tokamak3DR3F 
+                observation={result.observation_raw || null}
+                action={result.action}
+                step={result.episode_step}
+              />
+            </div>
             
             {/* Summary Stats */}
-            <div className="animate-in fade-in slide-in-from-bottom-4 rounded-lg border border-foreground/20 bg-foreground/10 p-4 backdrop-blur-md">
+            <div className="animate-in fade-in slide-in-from-bottom-4 rounded-lg border border-foreground/20 bg-foreground/10 p-4 backdrop-blur-md mx-auto max-w-2xl">
               <p className="font-mono text-sm text-foreground/90 mb-2">Inference Summary:</p>
               <p className="text-foreground/80 text-xs">
                 <span className="font-semibold">Cumulative Reward:</span> {result.reward.toFixed(6)}
