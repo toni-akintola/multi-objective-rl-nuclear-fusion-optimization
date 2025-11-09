@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+logs/sac_torax_1000_steps.zip
+logs/sac_torax_2000_steps.zip
+logs/sac_torax_3000_steps.zip
+logs/sac_torax_4000_steps.zip
+logs/sac_torax_5000_steps.zip
+logs/sac_torax_6000_steps.zip
+logs/sac_torax_7000_steps.zip
+logs/sac_torax_8000_steps.zip
+logs/sac_torax_9000_steps.zip
+logs/sac_torax_10000_steps.zip
+logs/sac_torax_flat.zip
