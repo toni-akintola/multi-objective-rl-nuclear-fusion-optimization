@@ -15,3 +15,5 @@ results/*.png
 
 # Model checkpoints
 logs/*.zip
+
+sim_data
