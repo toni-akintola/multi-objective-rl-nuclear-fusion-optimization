@@ -574,20 +574,20 @@ export default function ChamberPage() {
                   const response = await fetch("/api/launch-python")
                   const data = await response.json()
                   if (data.success) {
-                    alert("Python visualization launched! A matplotlib window should open.")
+                    alert("Visualization launched! A matplotlib window should open.")
                   } else {
                     alert(`Error: ${data.error}`)
                   }
                 } catch (error) {
-                  alert("Failed to launch Python visualization. Make sure Python is installed.")
+                  alert("Failed to launch visualization. Please ensure dependencies are installed.")
                 }
               }}
               className="rounded-lg bg-blue-600 px-8 py-4 font-mono text-lg text-white transition-all hover:bg-blue-700 hover:scale-105"
             >
-              🐍 Launch Python Visualization
+              Launch Visualization
             </button>
             <p className="text-center font-mono text-xs text-foreground/50">
-              Opens a real-time matplotlib window showing plasma shape monitoring
+              Opens a real-time window showing plasma shape monitoring
             </p>
           </div>
         </div>
