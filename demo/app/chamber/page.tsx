@@ -5,6 +5,7 @@ import { CustomCursor } from "@/components/custom-cursor"
 import { GrainOverlay } from "@/components/grain-overlay"
 import { useRef, useEffect, useState } from "react"
 import Link from "next/link"
+import { useReveal } from "@/hooks/use-reveal"
 
 // Dynamically import shader components to avoid SSR issues
 const ShaderBackground = dynamic(
@@ -48,6 +49,7 @@ const ShaderBackground = dynamic(
 export default function ChamberPage() {
   const [isLoaded, setIsLoaded] = useState(false)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
+  const { ref: revealRef, isVisible } = useReveal(0.2)
   
   // Calculator state
   const [calcValues, setCalcValues] = useState({
@@ -248,7 +250,12 @@ export default function ChamberPage() {
       >
         <div className="w-full max-w-4xl">
           {/* Header */}
-          <div className="mb-12 text-center">
+          <div
+            ref={revealRef as React.RefObject<HTMLDivElement>}
+            className={`mb-12 text-center transition-all duration-700 ${
+              isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+            }`}
+          >
             <div className="mb-4 inline-block rounded-full border border-foreground/20 bg-foreground/15 px-4 py-1.5 backdrop-blur-md">
               <p className="font-mono text-xs text-foreground/90">Safety Monitoring Systems</p>
             </div>
