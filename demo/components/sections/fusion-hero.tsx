@@ -18,6 +18,7 @@ export function FusionHeroSection() {
   } | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
   const [randomAgentRewards, setRandomAgentRewards] = useState<number[]>([])
+  const [pidAgentRewards, setPidAgentRewards] = useState<number[]>([])
 
   const handleRunInference = async () => {
     console.log("🔵 [FRONTEND] Run Inference button clicked")
@@ -25,14 +26,15 @@ export function FusionHeroSection() {
     setResult(null)
     setCurrentStep(0)
     setRandomAgentRewards([])
+    setPidAgentRewards([])
     
     const startTime = Date.now()
     const numSteps = 1000  // Can be increased further if needed
     
     try {
-      // Reset both environments in parallel
+      // Reset all environments in parallel
       console.log("📡 [FRONTEND] Resetting environments...")
-      const [resetResponse, randomResetResponse] = await Promise.all([
+      const [resetResponse, randomResetResponse, pidResetResponse] = await Promise.all([
         fetch("http://localhost:8000/reset", {
           method: "POST",
           headers: {
@@ -44,6 +46,15 @@ export function FusionHeroSection() {
           headers: {
             "Content-Type": "application/json",
           },
+        }),
+        fetch("http://localhost:8000/pid_reset", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }).catch(err => {
+          console.warn("PID agent reset failed, continuing without PID agent:", err)
+          return null
         })
       ])
       
@@ -52,6 +63,9 @@ export function FusionHeroSection() {
       }
       if (!randomResetResponse.ok) {
         console.warn("Random agent reset failed, continuing without random agent comparison")
+      }
+      if (pidResetResponse && !pidResetResponse.ok) {
+        console.warn("PID agent reset failed, continuing without PID agent comparison")
       }
       
       const resetData = await resetResponse.json()
@@ -74,14 +88,16 @@ export function FusionHeroSection() {
       const rewards: number[] = []
       let randomCumulativeReward = 0
       const randomRewards: number[] = []
+      let pidCumulativeReward = 0
+      const pidRewards: number[] = []
       
       for (let step = 0; step < numSteps; step++) {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout per step
         
         try {
-          // Run both agents in parallel
-          const [response, randomResponse] = await Promise.all([
+          // Run all agents in parallel
+          const [response, randomResponse, pidResponse] = await Promise.all([
             fetch(`http://localhost:8000/step?deterministic=true&num_steps=1`, {
               method: "POST",
               headers: {
@@ -98,6 +114,17 @@ export function FusionHeroSection() {
             }).catch(err => {
               // If random agent fails, continue without it
               console.warn("Random agent step failed:", err)
+              return null
+            }),
+            fetch("http://localhost:8000/pid_step", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              signal: controller.signal,
+            }).catch(err => {
+              // If PID agent fails, continue without it
+              console.warn("PID agent step failed:", err)
               return null
             })
           ])
@@ -119,6 +146,14 @@ export function FusionHeroSection() {
             randomCumulativeReward += randomData.reward
             randomRewards.push(randomData.reward)
             setRandomAgentRewards([...randomRewards])
+          }
+          
+          // Process PID agent response if available
+          if (pidResponse && pidResponse.ok) {
+            const pidData = await pidResponse.json()
+            pidCumulativeReward += pidData.reward
+            pidRewards.push(pidData.reward)
+            setPidAgentRewards([...pidRewards])
           }
           
           // Update visualization with each step
@@ -231,6 +266,16 @@ export function FusionHeroSection() {
                         }
                       }),
                     }] : []),
+                    ...(pidAgentRewards.length > 0 ? [{
+                      id: "pid_agent",
+                      data: pidAgentRewards.map((reward, index) => {
+                        const cumulative = pidAgentRewards.slice(0, index + 1).reduce((sum, r) => sum + r, 0)
+                        return {
+                          x: index + 1,
+                          y: cumulative,
+                        }
+                      }),
+                    }] : []),
                   ]}
                   margin={{ top: 20, right: 120, bottom: 50, left: 60 }}
                   xScale={{ type: "linear", min: 0 }}
@@ -264,7 +309,10 @@ export function FusionHeroSection() {
                     if (d.id === "random_agent") {
                       return "#ef4444" // red-500
                     }
-                    return "#3b82f6" // blue-500 (default)
+                    if (d.id === "pid_agent") {
+                      return "#10b981" // green-500
+                    }
+                    return "#3b82f6" // blue-500 (default - trained agent)
                   }}
                   lineWidth={2}
                   legends={[

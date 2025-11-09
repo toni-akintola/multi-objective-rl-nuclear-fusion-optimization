@@ -19,6 +19,11 @@ from fastapi.responses import JSONResponse, Response, StreamingResponse
 from pydantic import BaseModel
 import torch.nn as nn
 from starlette.middleware.base import BaseHTTPMiddleware
+import sys
+
+# Add src directory to path to import PIDAgent
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from src.agents.agent import PIDAgent
 
 # Configure logging
 logging.basicConfig(
@@ -137,6 +142,12 @@ def make_env(normalize=True):
     return env
 
 
+def make_unflattened_env():
+    """Create environment without flattening for PID agent."""
+    env = gym.make("gymtorax/IterHybrid-v0")
+    return env
+
+
 # FastAPI app
 app = FastAPI(title="SAC Model API", description="API for running SAC model timesteps")
 
@@ -184,6 +195,12 @@ episode_step: int = 0
 random_env: Optional[gym.Env] = None
 random_obs: Optional[np.ndarray] = None
 random_episode_step: int = 0
+
+# Global variables for PID agent environment (unflattened)
+pid_env: Optional[gym.Env] = None
+pid_obs: Optional[Dict[str, Any]] = None
+pid_episode_step: int = 0
+pid_agent: Optional[Any] = None
 # Get the directory where this script is located
 script_dir = Path(__file__).parent.absolute()
 saved_data_dir = script_dir / "saved_environment_data"
@@ -584,6 +601,136 @@ async def options_random_step(request: Request):
             "Access-Control-Max-Age": "3600",
         }
     )
+
+
+@app.post("/pid_reset", response_model=ResetResponse)
+async def reset_pid_agent():
+    """Reset the PID agent environment to initial state."""
+    global pid_env, pid_obs, pid_episode_step, pid_agent
+    
+    if pid_env is None:
+        try:
+            logger.info("Creating PID agent environment...")
+            pid_env = make_unflattened_env()
+            pid_agent = PIDAgent(
+                action_space=pid_env.action_space,
+                shape_penalty=0.0,
+                ramp_rate=0.2e6,
+                kp=0.6e6,
+                ki=0.05e6,
+                kd=0.0,
+            )
+            logger.info("PID agent environment created successfully")
+        except Exception as e:
+            error_msg = f"Failed to initialize PID agent environment: {str(e)}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=500, detail=error_msg)
+    
+    try:
+        pid_obs, info = pid_env.reset()
+        pid_agent.reset_state(pid_obs)
+        pid_episode_step = 0
+        
+        # Convert to serializable format
+        serializable_obs = serialize_for_json(pid_obs)
+        serializable_info = serialize_for_json(info)
+        
+        return ResetResponse(
+            observation=serializable_obs if isinstance(serializable_obs, list) else [],
+            observation_raw=serializable_obs if isinstance(serializable_obs, dict) else None,
+            info=serializable_info,
+            episode_step=pid_episode_step
+        )
+    except Exception as e:
+        error_msg = f"Failed to reset PID agent environment: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+@app.post("/pid_step", response_model=RandomStepResponse)
+async def run_pid_step():
+    """Run one step with a PID agent."""
+    global pid_env, pid_obs, pid_episode_step, pid_agent
+    
+    if pid_env is None or pid_agent is None:
+        try:
+            logger.info("Creating PID agent environment...")
+            pid_env = make_unflattened_env()
+            pid_agent = PIDAgent(
+                action_space=pid_env.action_space,
+                shape_penalty=0.0,
+                ramp_rate=0.2e6,
+                kp=0.6e6,
+                ki=0.05e6,
+                kd=0.0,
+            )
+            pid_obs, _ = pid_env.reset()
+            pid_agent.reset_state(pid_obs)
+            pid_episode_step = 0
+        except Exception as e:
+            error_msg = f"Failed to initialize PID agent environment: {str(e)}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=500, detail=error_msg)
+    
+    try:
+        # Get action from PID agent
+        action = pid_agent.act(pid_obs)
+        
+        # Step environment
+        pid_obs, reward, terminated, truncated, info = pid_env.step(action)
+        pid_episode_step += 1
+        
+        # Reset if episode ended
+        if terminated or truncated:
+            pid_obs, _ = pid_env.reset()
+            pid_agent.reset_state(pid_obs)
+            pid_episode_step = 0
+        
+        return RandomStepResponse(
+            reward=float(reward),
+            terminated=bool(terminated),
+            truncated=bool(truncated),
+            episode_step=pid_episode_step
+        )
+    except Exception as e:
+        error_msg = f"Failed to run PID agent step: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+@app.options("/pid_reset")
+async def options_pid_reset(request: Request):
+    """Handle CORS preflight for /pid_reset endpoint."""
+    origin = request.headers.get("origin", "*")
+    logger.info(f"✅ OPTIONS /pid_reset request from {origin}")
+    return Response(
+        content="",
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "3600",
+        }
+    )
+
+
+@app.options("/pid_step")
+async def options_pid_step(request: Request):
+    """Handle CORS preflight for /pid_step endpoint."""
+    origin = request.headers.get("origin", "*")
+    logger.info(f"✅ OPTIONS /pid_step request from {origin}")
+    return Response(
+        content="",
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "3600",
+        }
+    )
+
 
 @app.post("/step", response_model=StepResponse)
 async def run_step(request: Request, deterministic: bool = True, num_steps: int = 1):
