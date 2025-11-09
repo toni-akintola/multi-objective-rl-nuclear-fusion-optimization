@@ -157,37 +157,37 @@ export default function VerticalVisPage() {
         </div>
       </nav>
 
-      <div className={`relative z-10 px-6 pb-24 pt-32 transition-opacity duration-700 md:px-12 ${isLoaded ? "opacity-100" : "opacity-0"}`}>
-        <div className="mx-auto max-w-7xl">
+      <div
+        className={`relative z-10 flex min-h-screen flex-col items-center px-6 pt-32 pb-16 transition-opacity duration-700 md:px-12 ${
+          isLoaded ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="w-full max-w-4xl">
           {/* Hero Section */}
-          <div className="mb-16 text-center">
-            <div className="mb-4 inline-block rounded-full border border-foreground/20 bg-foreground/10 px-4 py-1.5 backdrop-blur-md">
+          <div className="mb-12 text-center">
+            <div className="mb-4 inline-block rounded-full border border-foreground/20 bg-foreground/15 px-4 py-1.5 backdrop-blur-md">
               <p className="font-mono text-xs text-foreground/90">Safety Monitoring Systems</p>
             </div>
-            <h1 className="mb-6 font-sans text-5xl font-light leading-tight tracking-tight text-foreground md:text-6xl lg:text-7xl">
+            <h1 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl">
               Vertical Position Monitoring
             </h1>
-            <p className="mx-auto mb-8 max-w-2xl text-lg leading-relaxed text-foreground/80 md:text-xl">
+            <p className="max-w-2xl mx-auto text-lg leading-relaxed text-foreground/70 md:text-xl">
               Continuous monitoring of plasma vertical position to prevent Vertical Displacement Events and ensure safe operation
             </p>
           </div>
 
           {/* What is Vertical Position? */}
-          <div className="mb-16">
-            <h2 className="mb-8 text-center font-sans text-3xl font-light text-foreground md:text-4xl">
-              What is Vertical Position?
-            </h2>
-            <div className="mx-auto max-w-4xl rounded-2xl border border-foreground/10 bg-foreground/5 p-8 backdrop-blur-md">
-              <p className="mb-6 text-lg leading-relaxed text-foreground/90">
-                Vertical position (Z) refers to the height of the plasma center within the tokamak chamber. 
-                When the plasma drifts too far up or down, it can hit the chamber walls in milliseconds, causing 
-                a Vertical Displacement Event (VDE) - one of the most dangerous and costly disruptions in fusion.
-              </p>
-            </div>
+          <div className="mb-12 rounded-2xl border border-foreground/10 bg-foreground/5 p-8 backdrop-blur-md">
+            <h2 className="mb-4 font-sans text-2xl font-semibold text-foreground">What is Vertical Position?</h2>
+            <p className="mb-6 text-foreground/80 leading-relaxed">
+              Vertical position (Z) refers to the height of the plasma center within the tokamak chamber. 
+              When the plasma drifts too far up or down, it can hit the chamber walls in milliseconds, causing 
+              a Vertical Displacement Event (VDE) - one of the most dangerous and costly disruptions in fusion.
+            </p>
           </div>
 
           {/* Parameters Section */}
-          <div className="mb-16">
+          <div className="mb-12">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6 backdrop-blur-md">
                 <div className="mb-2 font-mono text-sm font-semibold text-foreground/90">Z Position</div>
@@ -207,8 +207,8 @@ export default function VerticalVisPage() {
           </div>
 
           {/* Why Monitoring is Critical */}
-          <div className="mb-16">
-            <h2 className="mb-8 text-center font-sans text-3xl font-light text-foreground md:text-4xl">
+          <div className="mb-12">
+            <h2 className="mb-6 text-center font-sans text-2xl font-semibold text-foreground">
               Why Vertical Monitoring is Critical
             </h2>
             <div className="grid gap-6 md:grid-cols-2">
@@ -248,11 +248,11 @@ export default function VerticalVisPage() {
           </div>
 
           {/* Visualization Section */}
-          <div className="mb-16">
-            <h2 className="mb-8 text-center font-sans text-3xl font-light text-foreground md:text-4xl">
+          <div className="mb-12">
+            <h2 className="mb-6 text-center font-sans text-2xl font-semibold text-foreground">
               Live Visualization
             </h2>
-            <div className="mx-auto max-w-4xl text-center">
+            <div className="text-center">
               <p className="mb-8 text-lg text-foreground/70">
                 Watch the vertical guard system in action. See how plasma vertical position is monitored in real-time and how the system self-corrects when drift occurs.
               </p>
