@@ -159,7 +159,6 @@ function PlasmaTorus({ observation }: { observation: TokamakObservation }) {
 // Particle System Component
 function ParticleSystem({ observation }: { observation: TokamakObservation }) {
   const particlesRef = useRef<THREE.Points>(null)
-  const timeRef = useRef(0)
   
   const { positions, colors, sizes } = useMemo(() => {
     if (!observation || !isStructuredObs(observation)) {
@@ -186,14 +185,14 @@ function ParticleSystem({ observation }: { observation: TokamakObservation }) {
     )
     const maxDensity = Math.max(...n_e.map(n => n || 0), 1)
     
-    // Generate particles
+    // Generate particles based on density distribution
     const numParticles = 1000
     const positions = new Float32Array(numParticles * 3)
     const colors = new Float32Array(numParticles * 3)
     const sizes = new Float32Array(numParticles)
     
     for (let i = 0; i < numParticles; i++) {
-      // Sample based on density
+      // Sample rho based on density distribution (more particles where density is higher)
       const rand = Math.random()
       let rho = 0
       let cumulativeDensity = 0
@@ -211,21 +210,21 @@ function ParticleSystem({ observation }: { observation: TokamakObservation }) {
         rho = Math.random()
       }
       
-      // Random angles
-      const theta = Math.random() * Math.PI * 2  // Toroidal
-      const phi = Math.random() * Math.PI * 2  // Poloidal
+      // Random toroidal and poloidal angles
+      const theta = Math.random() * Math.PI * 2  // Toroidal angle
+      const phi = Math.random() * Math.PI * 2  // Poloidal angle
       
-      // Calculate position in 3D space
+      // Calculate position in 3D space (matching horizontal torus orientation)
       const r = a_minor * rho
       const x_local = r * Math.cos(phi)
       const y_local = r * Math.sin(phi) * elongation
       const z_local = 0
       
-      // Transform to toroidal coordinates
+      // Transform to toroidal coordinates (horizontal orientation)
       const R = R_major + x_local
       const x = R * Math.cos(theta)
-      const y = y_local
-      const z = R * Math.sin(theta)
+      const y = R * Math.sin(theta)  // Swapped for horizontal
+      const z = y_local  // Swapped for horizontal
       
       positions[i * 3] = x
       positions[i * 3 + 1] = y
@@ -233,7 +232,7 @@ function ParticleSystem({ observation }: { observation: TokamakObservation }) {
       
       // Color based on temperature
       const rhoIdx = Math.min(Math.floor(rho * (T_i.length - 1)), T_i.length - 1)
-      const temp = (T_i[rhoIdx] || 0 + T_e[rhoIdx] || 0) / 2
+      const temp = ((T_i[rhoIdx] || 0) + (T_e[rhoIdx] || 0)) / 2
       const color = tempToColor(temp, maxTemp)
       colors[i * 3] = color.r
       colors[i * 3 + 1] = color.g
@@ -247,31 +246,36 @@ function ParticleSystem({ observation }: { observation: TokamakObservation }) {
     return { positions, colors, sizes }
   }, [observation])
   
+  // Create and update geometry
+  const geometry = useMemo(() => {
+    if (positions.length === 0) return null
+    
+    const geom = new THREE.BufferGeometry()
+    geom.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geom.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+    geom.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
+    return geom
+  }, [positions, colors, sizes])
+  
   useFrame((state, delta) => {
     if (particlesRef.current) {
-      timeRef.current += delta
-      // Rotate particles around torus
-      particlesRef.current.rotation.y += 0.01 * delta
+      // Rotate particles around torus (z-axis for horizontal orientation)
+      particlesRef.current.rotation.z += 0.01 * delta
     }
   })
   
-  if (positions.length === 0) {
+  if (!geometry || positions.length === 0) {
     return null
   }
   
-  const geometry = new THREE.BufferGeometry()
-  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-  geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-  geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
-  
   return (
-    <points ref={particlesRef} geometry={geometry}>
+    <points ref={particlesRef} geometry={geometry} rotation={[Math.PI / 2, 0, 0]}>
       <pointsMaterial
         vertexColors
-        size={0.2}
+        size={0.3}
         sizeAttenuation={true}
         transparent
-        opacity={0.8}
+        opacity={0.9}
       />
     </points>
   )
@@ -390,9 +394,12 @@ function TokamakScene({ observation, action }: Tokamak3DR3FProps) {
       <pointLight position={[-10, -10, -10]} intensity={0.5} />
       <directionalLight position={[0, 10, 0]} intensity={0.8} />
       
-      {/* Tokamak components - only the donut */}
+      {/* Tokamak components - plasma torus and particles */}
       {observation && isStructuredObs(observation) && (
-        <PlasmaTorus observation={observation} />
+        <>
+          <PlasmaTorus observation={observation} />
+          <ParticleSystem observation={observation} />
+        </>
       )}
     </>
   )
@@ -414,7 +421,7 @@ export function Tokamak3DR3F({ observation, action, step }: Tokamak3DR3FProps) {
           3D Tokamak Visualization {step !== undefined ? `(Step: ${step})` : ''}
         </p>
         <p className="text-xs text-foreground/60">
-          Interactive 3D model with plasma torus, particle system, and magnetic coils
+          Interactive 3D model with plasma torus and particle system showing atomic movement
         </p>
       </div>
       <div className="bg-black/50 h-[600px] w-full">

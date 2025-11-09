@@ -187,7 +187,7 @@ export function FusionHeroSection() {
               )}
               {result.rewards && result.rewards.length > 1 && (
                 <p className="text-foreground/80 text-xs mt-1">
-                  <span className="font-semibold">Step rewards:</span> {result.rewards.slice(0, 10).map(r => r.toFixed(6)).join(", ")}
+                  <span className="font-semibold">Step rewards:</span> {result.rewards.slice(-10).reverse().map(r => r.toFixed(6)).join(", ")}
                   {result.rewards.length > 10 && ` ... (${result.rewards.length} total)`}
                 </p>
               )}

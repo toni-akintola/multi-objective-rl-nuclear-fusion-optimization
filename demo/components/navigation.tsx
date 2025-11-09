@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 
 interface NavigationProps {
   isLoaded: boolean
@@ -8,6 +9,7 @@ interface NavigationProps {
 }
 
 export function Navigation({ isLoaded, variant = "home" }: NavigationProps) {
+  const pathname = usePathname()
   const logoConfig = variant === "fusion" 
     ? { symbol: "ϕ", title: "Fusion Lab" }
     : { symbol: "ϕ", title: "Fusion Lab" }
@@ -38,14 +40,19 @@ export function Navigation({ isLoaded, variant = "home" }: NavigationProps) {
       <div className="hidden items-center gap-8 md:flex">
         {navItems.map((item) => {
           if (item.type === "link" && "href" in item && item.href) {
+            const isActive = pathname === item.href
             return (
               <Link
                 key={item.label}
                 href={item.href}
-                className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
+                className={`group relative font-sans text-sm font-medium transition-colors ${
+                  isActive ? "text-foreground" : "text-foreground/80 hover:text-foreground"
+                }`}
               >
                 {item.label}
-                <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
+                <span className={`absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 ${
+                  isActive ? "w-full" : "w-0 group-hover:w-full"
+                }`} />
               </Link>
             )
           }
