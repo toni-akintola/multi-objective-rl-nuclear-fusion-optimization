@@ -104,7 +104,6 @@ export default function VerticalPage() {
             opacity={0.97}
           />
         </Shader>
-        <div className="absolute inset-0 bg-black/20" />
       </div>
 
       <nav
