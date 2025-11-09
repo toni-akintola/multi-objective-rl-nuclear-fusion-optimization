@@ -476,11 +476,11 @@ export default function ChamberPage() {
             
             {/* Results */}
             {results && (
-              <div className="space-y-8 rounded-lg border border-foreground/10 bg-foreground/5 p-6">
+              <div className="space-y-8 rounded-lg border border-foreground/10 bg-gradient-to-br from-green-500/10 to-blue-500/10 p-6">
                 <h3 className="font-sans text-xl font-semibold text-foreground">Results</h3>
                 
                 {/* Real Tokamak Savings */}
-                <div className="rounded-lg border border-foreground/10 bg-background p-5">
+                <div className="rounded-lg bg-foreground/5 p-5">
                   <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Real Tokamak Savings</h4>
                   <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
@@ -503,7 +503,7 @@ export default function ChamberPage() {
                 </div>
                 
                 {/* Training Savings */}
-                <div className="rounded-lg border border-foreground/10 bg-background p-5">
+                <div className="rounded-lg bg-foreground/5 p-5">
                   <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Training Cost Savings</h4>
                   <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
@@ -526,7 +526,7 @@ export default function ChamberPage() {
                 </div>
                 
                 {/* Importance Scores */}
-                <div className="rounded-lg border border-foreground/10 bg-background p-5">
+                <div className="rounded-lg bg-foreground/5 p-5">
                   <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Importance Scores</h4>
                   <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
@@ -549,7 +549,7 @@ export default function ChamberPage() {
                 </div>
                 
                 {/* Total Value */}
-                <div className="rounded-lg border-2 border-foreground/20 bg-foreground/5 p-5">
+                <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 p-5">
                   <div className="text-center">
                     <div className="mb-2 text-sm text-foreground/60">Total Annual Value</div>
                     <div className="font-mono text-3xl font-bold text-foreground">
