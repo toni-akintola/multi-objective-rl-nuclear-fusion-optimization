@@ -2,8 +2,6 @@
 
 import { useRouter } from "next/navigation"
 import { MagneticButton } from "@/components/magnetic-button"
-import { Tokamak2D } from "@/components/tokamak-2d"
-import { TokamakParticles } from "@/components/tokamak-particles"
 import { Tokamak3DR3F } from "@/components/tokamak-3d-r3f"
 import { useState } from "react"
 

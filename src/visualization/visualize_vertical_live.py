@@ -11,21 +11,9 @@ import matplotlib.patches as mpatches
 import gymnasium as gym
 import gymtorax
 from agent import RandomAgent
-from iter_hybrid_shape_guard_env import make_iter_hybrid_shape_guard_env
-import importlib.util
-from pathlib import Path
+from src.environments.iter_hybrid_shape_guard_env import make_iter_hybrid_shape_guard_env
+from src.utils.vertical_guard import Z_MAX, MAX_DZ
 from collections import deque
-
-# Import vertical guard
-spec = importlib.util.spec_from_file_location(
-    "vertical_guard",
-    Path(__file__).parent / "optimization-for-constraints" / "vertical_guard.py"
-)
-vertical_guard = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(vertical_guard)
-vertical_violation = vertical_guard.vertical_violation
-Z_MAX = vertical_guard.Z_MAX
-MAX_DZ = vertical_guard.MAX_DZ
 
 
 class LiveVerticalChamber:
