@@ -171,7 +171,7 @@ export default function VerticalVisPage() {
       </div>
 
       <nav
-        className={`fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-foreground/10 bg-background/80 px-6 py-4 backdrop-blur-md transition-opacity duration-700 md:px-12 ${
+        className={`fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-6 transition-opacity duration-700 md:px-12 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
       >
