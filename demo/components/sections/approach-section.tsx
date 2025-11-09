@@ -12,12 +12,12 @@ export function ApproachSection() {
     >
       <div className="mx-auto w-full max-w-5xl">
         <div
-          className={`mb-12 transition-all duration-700 md:mb-16 ${
+          className={`mb-8 transition-all duration-700 md:mb-12 ${
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
           <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 03. OUR IMPLEMENTATION</p>
-          <h2 className="mb-6 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
+          <h2 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
             <span className="text-balance">Training in the Simulation</span>
           </h2>
         </div>
@@ -107,18 +107,10 @@ export function ApproachSection() {
               <p className="mb-6 max-w-2xl leading-relaxed text-foreground/70 md:text-lg">
                 Through iterative training, the agent develops a control policy that can anticipate plasma instabilities
                 and correct them before they occur—something traditional PID controllers simply cannot do.
-              </p>
-              <p className="max-w-2xl leading-relaxed text-foreground/60">
-                The result is a controller that learns the deep structure of plasma dynamics and adapts in real-time to
+                Our result is a controller that learns the deep structure of plasma dynamics and adapts in real-time to
                 new conditions, bringing us closer to the dream of practical, sustainable fusion energy.
               </p>
             </div>
-          </div>
-        </div>
-
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-in fade-in duration-1000">
-          <div className="text-center">
-            <p className="font-mono text-xs text-foreground/80">Explore more features coming soon</p>
           </div>
         </div>
       </div>

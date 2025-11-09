@@ -12,12 +12,12 @@ export function SolutionSection() {
     >
       <div className="mx-auto w-full max-w-5xl">
         <div
-          className={`mb-12 transition-all duration-700 md:mb-16 ${
+          className={`mb-8 transition-all duration-700 md:mb-12 ${
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
           <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 02. THE APPROACH</p>
-          <h2 className="mb-6 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
+          <h2 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
             <span className="text-balance">Why Traditional Control Fails</span>
           </h2>
         </div>

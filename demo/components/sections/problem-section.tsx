@@ -12,12 +12,12 @@ export function ProblemSection() {
     >
       <div className="mx-auto w-full max-w-5xl">
         <div
-          className={`mb-12 transition-all duration-700 md:mb-16 ${
+          className={`mb-8 transition-all duration-700 md:mb-12 ${
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
           <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 01. THE CHALLENGE</p>
-          <h2 className="mb-6 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
+          <h2 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
             <span className="text-balance">The Plasma Control Problem</span>
           </h2>
         </div>
@@ -70,22 +70,20 @@ export function ProblemSection() {
             </p>
           </div>
 
-          <div className="border-t border-foreground/10 pt-8">
-            <div
-              className={`transition-all duration-700 ${
-                isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
-              }`}
-              style={{ transitionDelay: "400ms" }}
-            >
-              <h4 className="mb-4 font-mono text-sm text-accent">System Complexity</h4>
-              <p className="max-w-2xl leading-relaxed text-foreground/70">
-                The plasma dynamics are highly <span className="text-foreground/90">nonlinear</span> — small changes can
-                trigger massive instabilities. They are{" "}
-                <span className="text-foreground/90">coupled across dimensions</span>— magnetic, thermal, and current
-                feedback interact. And they are <span className="text-foreground/90">time-varying</span>— plasma
-                behavior evolves rapidly during the reaction.
-              </p>
-            </div>
+          <div
+            className={`transition-all duration-700 ${
+              isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
+            }`}
+            style={{ transitionDelay: "400ms" }}
+          >
+            <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+              System Complexity
+            </h3>
+            <p className="max-w-2xl leading-relaxed text-foreground/70 md:text-lg">
+              Plasma dynamics are highly nonlinear—small perturbations can trigger massive instabilities. Magnetic,
+              thermal, and current feedback loops couple across dimensions, constantly interacting. Conditions evolve
+              over milliseconds, demanding control strategies that adapt in real time.
+            </p>
           </div>
         </div>
       </div>
