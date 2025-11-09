@@ -196,10 +196,6 @@ function FusionPageContent() {
             )
           })}
         </div>
-
-        <MagneticButton variant="secondary" onClick={() => scrollToSection(3)}>
-          Learn More
-        </MagneticButton>
       </nav>
 
       <div

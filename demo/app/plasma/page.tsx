@@ -170,10 +170,6 @@ export default function PlasmaPage() {
             )
           })}
         </div>
-
-        <MagneticButton variant="secondary" onClick={() => scrollToSection(4)}>
-          View Visualization
-        </MagneticButton>
       </nav>
 
       <div

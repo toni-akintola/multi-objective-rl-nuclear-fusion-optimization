@@ -169,12 +169,6 @@ export default function VerticalPage() {
             )
           })}
         </div>
-
-        <Link href="/vertical-vis">
-          <MagneticButton variant="secondary">
-            Go to Calculator
-          </MagneticButton>
-        </Link>
       </nav>
 
       <div
