@@ -3,42 +3,21 @@
 import { Shader, ChromaFlow, Swirl } from "shaders/react"
 import { CustomCursor } from "@/components/custom-cursor"
 import { GrainOverlay } from "@/components/grain-overlay"
-import { FusionHeroSection } from "@/components/sections/fusion-hero"
-import { ProblemSection } from "@/components/sections/problem-section"
-import { SolutionSection } from "@/components/sections/solution-section"
-import { ApproachSection } from "@/components/sections/approach-section"
+import { VerticalHeroSection } from "@/components/sections/vertical-hero"
+import { VerticalWhatSection } from "@/components/sections/vertical-what-section"
+import { VerticalWhySection } from "@/components/sections/vertical-why-section"
+import { VerticalCalculatorSection } from "@/components/sections/vertical-calculator-section"
+import { VerticalVisualizationSection } from "@/components/sections/vertical-visualization-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { useRef, useEffect, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
-import { Suspense } from "react"
 
-export default function FusionPage() {
-  return (
-    <Suspense fallback={<div className="h-screen w-full bg-background" />}>
-      <FusionPageContent />
-    </Suspense>
-  )
-}
-
-function FusionPageContent() {
+export default function VerticalPage() {
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
-  const sections = [FusionHeroSection, ProblemSection, SolutionSection, ApproachSection]
-  const searchParams = useSearchParams()
-
-  // Read section from URL on mount
-  useEffect(() => {
-    const sectionParam = searchParams.get('section')
-    if (sectionParam) {
-      const sectionIndex = parseInt(sectionParam, 10)
-      if (sectionIndex >= 0 && sectionIndex < sections.length) {
-        setCurrentSection(sectionIndex)
-      }
-    }
-  }, [searchParams])
+  const sections = [VerticalHeroSection, VerticalWhatSection, VerticalWhySection, VerticalCalculatorSection, VerticalVisualizationSection]
 
   useEffect(() => {
     const checkShaderReady = () => {
@@ -133,19 +112,19 @@ function FusionPageContent() {
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
       >
-        <button
-          onClick={() => scrollToSection(0)}
+        <Link
+          href="/fusion"
           className="flex items-center gap-2 transition-transform hover:scale-105"
         >
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/15 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-foreground/25">
             <span className="font-sans text-xl font-bold text-foreground">ϕ</span>
           </div>
           <span className="font-sans text-xl font-semibold tracking-tight text-foreground">Fusion Lab</span>
-        </button>
+        </Link>
 
         <div className="hidden items-center gap-8 md:flex">
           {["Problem", "Solution", "Approach", "Plasma", "Vertical", "Insights"].map((item, index) => {
-            // Plasma links to chamber page, Vertical links to vertical-vis page
+            // Plasma links to chamber page
             if (item === "Plasma") {
               return (
                 <Link
@@ -158,6 +137,7 @@ function FusionPageContent() {
                 </Link>
               )
             }
+            // Vertical links to vertical-vis page
             if (item === "Vertical") {
               return (
                 <Link
@@ -170,7 +150,7 @@ function FusionPageContent() {
                 </Link>
               )
             }
-            // Map to correct sections: Problem=1 (ProblemSection), Solution=2 (SolutionSection), Approach=3 (ApproachSection), Insights=3 (ApproachSection)
+            // Map to fusion page sections
             const sectionMap: Record<string, number> = {
               "Problem": 1,
               "Solution": 2,
@@ -179,27 +159,23 @@ function FusionPageContent() {
             }
             const sectionIndex = sectionMap[item] ?? 0
             return (
-              <button
+              <Link
                 key={item}
-                onClick={() => scrollToSection(sectionIndex)}
-                className={`group relative font-sans text-sm font-medium transition-colors ${
-                  currentSection === sectionIndex ? "text-foreground" : "text-foreground/80 hover:text-foreground"
-                }`}
+                href={`/fusion?section=${sectionIndex}`}
+                className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
               >
                 {item}
-                <span
-                  className={`absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 ${
-                    currentSection === sectionIndex ? "w-full" : "w-0 group-hover:w-full"
-                  }`}
-                />
-              </button>
+                <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
+              </Link>
             )
           })}
         </div>
 
-        <MagneticButton variant="secondary" onClick={() => scrollToSection(3)}>
-          Learn More
-        </MagneticButton>
+        <Link href="/vertical-vis">
+          <MagneticButton variant="secondary">
+            Go to Calculator
+          </MagneticButton>
+        </Link>
       </nav>
 
       <div
@@ -244,3 +220,4 @@ function FusionPageContent() {
     </main>
   )
 }
+

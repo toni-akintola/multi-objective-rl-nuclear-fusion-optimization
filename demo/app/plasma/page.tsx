@@ -123,17 +123,31 @@ export default function PlasmaPage() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          {["Problem", "Solution", "Approach", "Plasma", "Insights"].map((item, index) => {
-            // Plasma is active on this page, others link to specific sections on fusion page
+          {["Problem", "Solution", "Approach", "Plasma", "Vertical", "Insights"].map((item, index) => {
+            // Plasma links to chamber page
             if (item === "Plasma") {
               return (
-                <button
+                <Link
                   key={item}
-                  className="group relative font-sans text-sm font-medium transition-colors text-foreground"
+                  href="/chamber"
+                  className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
                 >
                   {item}
-                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-full" />
-                </button>
+                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
+                </Link>
+              )
+            }
+            // Vertical links to vertical-vis page
+            if (item === "Vertical") {
+              return (
+                <Link
+                  key={item}
+                  href="/vertical-vis"
+                  className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
+                >
+                  {item}
+                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
+                </Link>
               )
             }
             // Map to fusion page sections: Problem=1, Solution=2, Approach=3, Insights=3
