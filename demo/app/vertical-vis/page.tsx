@@ -168,7 +168,6 @@ export default function VerticalVisPage() {
         style={{ contain: "strict" }}
       >
         <ShaderBackground />
-        <div className="absolute inset-0 bg-black/40" />
       </div>
 
       <nav
