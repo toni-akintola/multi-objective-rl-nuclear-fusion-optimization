@@ -476,83 +476,83 @@ export default function ChamberPage() {
             
             {/* Results */}
             {results && (
-              <div className="space-y-6 rounded-lg border border-foreground/10 bg-gradient-to-br from-green-500/10 to-blue-500/10 p-6">
+              <div className="space-y-8 rounded-lg border border-foreground/10 bg-foreground/5 p-6">
                 <h3 className="font-sans text-xl font-semibold text-foreground">Results</h3>
                 
                 {/* Real Tokamak Savings */}
-                <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">Real Tokamak Savings</h4>
-                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-lg border border-foreground/10 bg-background p-5">
+                  <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Real Tokamak Savings</h4>
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Disruptions prevented:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.tokamak.disruptionsPrevented.toFixed(1)}</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.disruptionsPrevented.toFixed(1)}</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Prevention rate:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.tokamak.preventionRate.toFixed(1)}%</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.preventionRate.toFixed(1)}%</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Annual savings:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">${(results.tokamak.annualSavings / 1_000_000).toFixed(1)}M</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">${(results.tokamak.annualSavings / 1_000_000).toFixed(1)}M</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">ROI:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.tokamak.roi.toFixed(1)}%</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.roi.toFixed(1)}%</span>
                     </div>
                   </div>
                 </div>
                 
                 {/* Training Savings */}
-                <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">Training Cost Savings</h4>
-                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-lg border border-foreground/10 bg-background p-5">
+                  <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Training Cost Savings</h4>
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Episode length improvement:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">+{results.training.episodeLengthImprovement.toFixed(1)}%</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">+{results.training.episodeLengthImprovement.toFixed(1)}%</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Convergence speedup:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">{results.training.convergenceSpeedup.toFixed(1)}x</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.training.convergenceSpeedup.toFixed(1)}x</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Time savings:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">{results.training.timeSavings.toFixed(1)} hours</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.training.timeSavings.toFixed(1)} hours</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Training cost savings:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">${results.training.trainingCostSavings.toFixed(2)}</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">${results.training.trainingCostSavings.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
                 
                 {/* Importance Scores */}
-                <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">Importance Scores</h4>
-                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-lg border border-foreground/10 bg-background p-5">
+                  <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Importance Scores</h4>
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Overall importance:</span>
-                      <span className="ml-2 font-mono text-lg font-bold text-purple-400">{results.importance.overallImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono text-lg font-bold text-foreground">{results.importance.overallImportance.toFixed(1)}/100</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Tokamak importance:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.importance.tokamakImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.tokamakImportance.toFixed(1)}/100</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Training importance:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">{results.importance.trainingImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.trainingImportance.toFixed(1)}/100</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Safety importance:</span>
-                      <span className="ml-2 font-mono font-semibold text-orange-400">{results.importance.safetyImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.safetyImportance.toFixed(1)}/100</span>
                     </div>
                   </div>
                 </div>
                 
                 {/* Total Value */}
-                <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 p-4">
+                <div className="rounded-lg border-2 border-foreground/20 bg-foreground/5 p-5">
                   <div className="text-center">
-                    <div className="mb-1 text-sm text-foreground/60">Total Annual Value</div>
-                    <div className="font-mono text-3xl font-bold text-green-400">
+                    <div className="mb-2 text-sm text-foreground/60">Total Annual Value</div>
+                    <div className="font-mono text-3xl font-bold text-foreground">
                       ${(results.totalAnnualValue / 1_000_000).toFixed(2)}M
                     </div>
                   </div>
