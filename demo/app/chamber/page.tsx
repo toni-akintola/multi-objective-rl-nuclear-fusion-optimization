@@ -609,4 +609,3 @@ export default function ChamberPage() {
     </main>
   )
 }
-
