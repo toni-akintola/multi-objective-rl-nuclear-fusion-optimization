@@ -192,14 +192,6 @@ export function FusionHeroSection() {
         )}
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-in fade-in duration-1000 delay-500">
-        <div className="flex items-center gap-2">
-          <p className="font-mono text-xs text-foreground/80">Scroll to explore</p>
-          <div className="flex h-6 w-12 items-center justify-center rounded-full border border-foreground/20 bg-foreground/15 backdrop-blur-md">
-            <div className="h-2 w-2 animate-pulse rounded-full bg-foreground/80" />
-          </div>
-        </div>
-      </div>
     </section>
   )
 }

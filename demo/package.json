@@ -6,7 +6,7 @@
     "build": "next build",
     "dev": "concurrently -n \"NEXT,API\" -c \"blue,green\" \"npm run dev:next\" \"npm run dev:api\"",
     "dev:next": "next dev",
-    "dev:api": "../.venv/bin/python3 ../api_server.py",
+    "dev:api": "../.venv/bin/python3 ../src/servers/api_server.py",
     "lint": "eslint .",
     "start": "next start"
   },
