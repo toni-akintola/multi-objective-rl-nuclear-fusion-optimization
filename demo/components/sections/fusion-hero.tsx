@@ -1,9 +1,9 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { MagneticButton } from "@/components/magnetic-button"
 import { Tokamak3DR3F } from "@/components/tokamak-3d-r3f"
 import { useState } from "react"
+import { ResponsiveLine } from "@nivo/line"
 
 export function FusionHeroSection() {
   const [isRunning, setIsRunning] = useState(false)
@@ -17,32 +17,45 @@ export function FusionHeroSection() {
     episode_step?: number;
   } | null>(null)
   const [currentStep, setCurrentStep] = useState(0)
+  const [randomAgentRewards, setRandomAgentRewards] = useState<number[]>([])
 
   const handleRunInference = async () => {
     console.log("🔵 [FRONTEND] Run Inference button clicked")
     setIsRunning(true)
     setResult(null)
     setCurrentStep(0)
+    setRandomAgentRewards([])
     
     const startTime = Date.now()
-    const numSteps = 300
+    const numSteps = 1000  // Can be increased further if needed
     
     try {
-      // First reset the environment
-      console.log("📡 [FRONTEND] Resetting environment...")
-      const resetResponse = await fetch("http://localhost:8000/reset", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+      // Reset both environments in parallel
+      console.log("📡 [FRONTEND] Resetting environments...")
+      const [resetResponse, randomResetResponse] = await Promise.all([
+        fetch("http://localhost:8000/reset", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }),
+        fetch("http://localhost:8000/random_reset", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+      ])
       
       if (!resetResponse.ok) {
         throw new Error(`Reset failed: ${resetResponse.status}`)
       }
+      if (!randomResetResponse.ok) {
+        console.warn("Random agent reset failed, continuing without random agent comparison")
+      }
       
       const resetData = await resetResponse.json()
-      console.log("✅ [FRONTEND] Environment reset")
+      console.log("✅ [FRONTEND] Environments reset")
       
       // Set initial observation
       setResult({
@@ -59,19 +72,35 @@ export function FusionHeroSection() {
       // Run steps one by one to see updates
       let cumulativeReward = 0
       const rewards: number[] = []
+      let randomCumulativeReward = 0
+      const randomRewards: number[] = []
       
       for (let step = 0; step < numSteps; step++) {
         const controller = new AbortController()
         const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 second timeout per step
         
         try {
-          const response = await fetch(`http://localhost:8000/step?deterministic=true&num_steps=1`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            signal: controller.signal,
-          })
+          // Run both agents in parallel
+          const [response, randomResponse] = await Promise.all([
+            fetch(`http://localhost:8000/step?deterministic=true&num_steps=1`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              signal: controller.signal,
+            }),
+            fetch("http://localhost:8000/random_step", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              signal: controller.signal,
+            }).catch(err => {
+              // If random agent fails, continue without it
+              console.warn("Random agent step failed:", err)
+              return null
+            })
+          ])
           
           clearTimeout(timeoutId)
           
@@ -83,6 +112,14 @@ export function FusionHeroSection() {
           const data = await response.json()
           cumulativeReward += data.reward
           rewards.push(data.reward)
+          
+          // Process random agent response if available
+          if (randomResponse && randomResponse.ok) {
+            const randomData = await randomResponse.json()
+            randomCumulativeReward += randomData.reward
+            randomRewards.push(randomData.reward)
+            setRandomAgentRewards([...randomRewards])
+          }
           
           // Update visualization with each step
           setResult({
@@ -131,8 +168,6 @@ export function FusionHeroSection() {
     }
   }
 
-  const router = useRouter()
-
   return (
     <section className="flex min-h-screen w-screen shrink-0 flex-col items-center justify-start px-6 pt-24 pb-24 md:px-12 md:pt-32 md:pb-32 lg:pt-36 lg:pb-36">
       <div className="max-w-3xl w-full text-center">
@@ -149,13 +184,9 @@ export function FusionHeroSection() {
           </span>
         </p>
         <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center sm:justify-center">
-          <MagneticButton size="lg" variant="primary" onClick={() => router.push("/visualizations/sac")}>
-            Visualizations
-            
-          </MagneticButton>
           <MagneticButton 
             size="lg" 
-            variant="secondary" 
+            variant="primary" 
             onClick={handleRunInference}
             disabled={isRunning}
           >
@@ -174,24 +205,115 @@ export function FusionHeroSection() {
               />
             </div>
             
-            {/* Summary Stats */}
-            <div className="animate-in fade-in slide-in-from-bottom-4 rounded-lg border border-foreground/20 bg-foreground/10 p-4 backdrop-blur-md mx-auto max-w-2xl">
-              <p className="font-mono text-sm text-foreground/90 mb-2">Inference Summary:</p>
-              <p className="text-foreground/80 text-xs">
-                <span className="font-semibold">Cumulative Reward:</span> {result.reward.toFixed(6)}
-              </p>
-              {result.numSteps && (
-                <p className="text-foreground/80 text-xs mt-1">
-                  <span className="font-semibold">Steps executed:</span> {result.numSteps}
-                </p>
-              )}
-              {result.rewards && result.rewards.length > 1 && (
-                <p className="text-foreground/80 text-xs mt-1">
-                  <span className="font-semibold">Step rewards:</span> {result.rewards.slice(-10).reverse().map(r => r.toFixed(6)).join(", ")}
-                  {result.rewards.length > 10 && ` ... (${result.rewards.length} total)`}
-                </p>
-              )}
-            </div>
+            {/* Live Reward Chart */}
+            {result.rewards && result.rewards.length > 0 && (
+              <div className="animate-in fade-in slide-in-from-bottom-4 rounded-lg border border-foreground/20 bg-foreground/10 p-4 backdrop-blur-md mx-auto max-w-4xl h-64">
+                <p className="font-mono text-sm text-foreground/90 mb-4">Cumulative Reward Over Time</p>
+                <ResponsiveLine
+                  data={[
+                    {
+                      id: "trained_agent",
+                      data: result.rewards.map((reward, index) => {
+                        const cumulative = result.rewards!.slice(0, index + 1).reduce((sum, r) => sum + r, 0)
+                        return {
+                          x: index + 1,
+                          y: cumulative,
+                        }
+                      }),
+                    },
+                    ...(randomAgentRewards.length > 0 ? [{
+                      id: "random_agent",
+                      data: randomAgentRewards.map((reward, index) => {
+                        const cumulative = randomAgentRewards.slice(0, index + 1).reduce((sum, r) => sum + r, 0)
+                        return {
+                          x: index + 1,
+                          y: cumulative,
+                        }
+                      }),
+                    }] : []),
+                  ]}
+                  margin={{ top: 20, right: 120, bottom: 50, left: 60 }}
+                  xScale={{ type: "linear", min: 0 }}
+                  yScale={{ type: "linear", min: "auto" }}
+                  curve="monotoneX"
+                  axisTop={null}
+                  axisRight={null}
+                  axisBottom={{
+                    tickSize: 5,
+                    tickPadding: 5,
+                    tickRotation: 0,
+                    legend: "Step",
+                    legendPosition: "middle",
+                    legendOffset: 40,
+                  }}
+                  axisLeft={{
+                    tickSize: 5,
+                    tickPadding: 5,
+                    tickRotation: 0,
+                    legend: "Cumulative Reward",
+                    legendPosition: "middle",
+                    legendOffset: -50,
+                  }}
+                  pointSize={0}
+                  pointColor={{ theme: "background" }}
+                  pointBorderWidth={0}
+                  pointBorderColor={{ from: "serieColor" }}
+                  enableArea={false}
+                  useMesh={true}
+                  colors={(d) => {
+                    if (d.id === "random_agent") {
+                      return "#ef4444" // red-500
+                    }
+                    return "#3b82f6" // blue-500 (default)
+                  }}
+                  lineWidth={2}
+                  legends={[
+                    {
+                      anchor: "right",
+                      direction: "column",
+                      justify: false,
+                      translateX: 120,
+                      translateY: 0,
+                      itemsSpacing: 8,
+                      itemDirection: "left-to-right",
+                      itemWidth: 100,
+                      itemHeight: 20,
+                      symbolSize: 12,
+                      symbolShape: "circle",
+                    },
+                  ]}
+                  theme={{
+                    text: {
+                      fill: "rgba(255, 255, 255, 0.7)",
+                      fontSize: 11,
+                    },
+                    axis: {
+                      domain: {
+                        line: {
+                          stroke: "rgba(255, 255, 255, 0.2)",
+                          strokeWidth: 1,
+                        },
+                      },
+                      ticks: {
+                        line: {
+                          stroke: "rgba(255, 255, 255, 0.2)",
+                          strokeWidth: 1,
+                        },
+                        text: {
+                          fill: "rgba(255, 255, 255, 0.7)",
+                        },
+                      },
+                    },
+                    grid: {
+                      line: {
+                        stroke: "rgba(255, 255, 255, 0.1)",
+                        strokeWidth: 1,
+                      },
+                    },
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>

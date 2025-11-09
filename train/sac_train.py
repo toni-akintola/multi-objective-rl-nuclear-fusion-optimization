@@ -134,7 +134,7 @@ def main():
         env, 
         verbose=1,
         learning_rate=3e-3,  # Lower learning rate
-        buffer_size=25000,  # Reduced buffer size to fit in memory (~1.4 GB)
+        buffer_size=30000,  # Reduced buffer size to fit in memory (~1.4 GB)
         learning_starts=1000,  # Start learning after some random exploration
         batch_size=256,
         tau=0.005,  # Soft update coefficient
@@ -159,7 +159,7 @@ def main():
     print("\nStarting training...")
     try:
         model.learn(
-            total_timesteps=20000, 
+            total_timesteps=50000, 
             log_interval=4,
             callback=checkpoint_callback
         )

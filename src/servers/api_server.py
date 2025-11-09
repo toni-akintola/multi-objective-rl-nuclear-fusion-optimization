@@ -179,6 +179,11 @@ model: Optional[SAC] = None
 env: Optional[gym.Env] = None
 current_obs: Optional[np.ndarray] = None
 episode_step: int = 0
+
+# Global variables for random agent environment
+random_env: Optional[gym.Env] = None
+random_obs: Optional[np.ndarray] = None
+random_episode_step: int = 0
 # Get the directory where this script is located
 script_dir = Path(__file__).parent.absolute()
 saved_data_dir = script_dir / "saved_environment_data"
@@ -227,6 +232,14 @@ class ResetResponse(BaseModel):
     observation: list
     observation_raw: Optional[Dict[str, Any]] = None  # Unflattened structured observation
     info: Dict[str, Any]
+    episode_step: int
+
+
+class RandomStepResponse(BaseModel):
+    """Response model for random agent step endpoint."""
+    reward: float
+    terminated: bool
+    truncated: bool
     episode_step: int
 
 
@@ -421,6 +434,99 @@ async def reset_environment():
     )
 
 
+@app.post("/random_reset", response_model=ResetResponse)
+async def reset_random_agent():
+    """Reset the random agent environment to initial state."""
+    global random_env, random_obs, random_episode_step
+    
+    if random_env is None:
+        try:
+            logger.info("Creating random agent environment...")
+            random_env = make_env(normalize=True)
+            logger.info("Random agent environment created successfully")
+        except Exception as e:
+            error_msg = f"Failed to initialize random agent environment: {str(e)}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=500, detail=error_msg)
+    
+    try:
+        random_obs, info = random_env.reset()
+        random_episode_step = 0
+        
+        # Convert to serializable format
+        serializable_obs = serialize_for_json(random_obs)
+        serializable_info = serialize_for_json(info)
+        
+        # Try to unflatten observation
+        serializable_raw_obs = None
+        temp_env = random_env
+        random_flatten_wrapper = None
+        while isinstance(temp_env, gym.Wrapper):
+            if isinstance(temp_env, FlattenObsWrapper):
+                random_flatten_wrapper = temp_env
+            temp_env = temp_env.env
+        
+        if random_flatten_wrapper is not None:
+            try:
+                from gymnasium.spaces.utils import unflatten
+                raw_obs = unflatten(random_flatten_wrapper._orig_obs_space, random_obs)
+                serializable_raw_obs = serialize_for_json(raw_obs)
+            except Exception as e:
+                logger.debug(f"Could not unflatten random agent reset observation: {e}")
+        
+        return ResetResponse(
+            observation=serializable_obs,
+            observation_raw=serializable_raw_obs,
+            info=serializable_info,
+            episode_step=random_episode_step
+        )
+    except Exception as e:
+        error_msg = f"Failed to reset random agent environment: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+@app.post("/random_step", response_model=RandomStepResponse)
+async def run_random_step():
+    """Run one step with a random agent."""
+    global random_env, random_obs, random_episode_step
+    
+    if random_env is None:
+        try:
+            logger.info("Creating random agent environment...")
+            random_env = make_env(normalize=True)
+            random_obs, _ = random_env.reset()
+            random_episode_step = 0
+        except Exception as e:
+            error_msg = f"Failed to initialize random agent environment: {str(e)}"
+            logger.error(error_msg)
+            raise HTTPException(status_code=500, detail=error_msg)
+    
+    try:
+        # Sample random action
+        action = random_env.action_space.sample()
+        
+        # Step environment
+        random_obs, reward, terminated, truncated, info = random_env.step(action)
+        random_episode_step += 1
+        
+        # Reset if episode ended
+        if terminated or truncated:
+            random_obs, _ = random_env.reset()
+            random_episode_step = 0
+        
+        return RandomStepResponse(
+            reward=float(reward),
+            terminated=bool(terminated),
+            truncated=bool(truncated),
+            episode_step=random_episode_step
+        )
+    except Exception as e:
+        error_msg = f"Failed to run random agent step: {str(e)}"
+        logger.error(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
 @app.options("/step")
 async def options_step(request: Request, deterministic: bool = None):
     """Handle CORS preflight for /step endpoint.
@@ -434,6 +540,40 @@ async def options_step(request: Request, deterministic: bool = None):
     logger.info(f"✅ OPTIONS /step request from {origin}, allowing all origins")
     print(f"✅ OPTIONS /step request from {origin}, allowing all origins")
     
+    return Response(
+        content="",
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "3600",
+        }
+    )
+
+
+@app.options("/random_reset")
+async def options_random_reset(request: Request):
+    """Handle CORS preflight for /random_reset endpoint."""
+    origin = request.headers.get("origin", "*")
+    logger.info(f"✅ OPTIONS /random_reset request from {origin}")
+    return Response(
+        content="",
+        status_code=200,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Max-Age": "3600",
+        }
+    )
+
+
+@app.options("/random_step")
+async def options_random_step(request: Request):
+    """Handle CORS preflight for /random_step endpoint."""
+    origin = request.headers.get("origin", "*")
+    logger.info(f"✅ OPTIONS /random_step request from {origin}")
     return Response(
         content="",
         status_code=200,
