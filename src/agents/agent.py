@@ -2,6 +2,7 @@ import abc
 from gymnasium import spaces  # Assuming a gym-like space object
 import importlib.util
 from pathlib import Path
+import numpy as np
 
 # Import shape guard module
 spec = importlib.util.spec_from_file_location(
@@ -149,3 +150,156 @@ class RandomAgent(Agent):
                     action = self.damp_factor * action
 
         return action
+
+
+_NBI_W_TO_MA = 1 / 16e6
+_NBI_POWERS = np.array([0, 0, 33e6])
+_R_NBI = 0.25
+_W_NBI = 0.25
+_ECCD_POWER = {0: 0, 99: 0, 100: 20.0e6}
+
+
+class PIDAgent(Agent):
+    """
+    Simple PID-based controller that adjusts plasma current to follow a target
+    trajectory using classic proportional-integral-derivative control with
+    ramp-rate limiting and optional shape safety.
+    """
+
+    def __init__(
+        self,
+        action_space: spaces.Space,
+        shape_penalty: float = 0.0,
+        get_j_target=None,
+        ramp_rate: float = 0.2e6,
+        kp: float = 0.6e6,
+        ki: float = 0.05e6,
+        kd: float = 0.0,
+    ):
+        super().__init__(action_space, shape_penalty=shape_penalty)
+        self.get_j_target = get_j_target or self._default_target
+
+        # PID gains
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+
+        # Time step in seconds (ITER hybrid sim uses 1 second fixed DT)
+        self.dt = 1.0
+
+        # Ramp rate limit in A/s (e.g., 0.2 MA/s = 0.2e6 A/s)
+        self.ramp_rate = ramp_rate
+
+        # Physical limits for Ip current (MA converted to Amps)
+        self.ip_min = float(action_space.spaces["Ip"].low[0])
+        self.ip_max = float(action_space.spaces["Ip"].high[0])
+
+        # Controller state
+        self._reset_controller_state()
+
+    def _reset_controller_state(self):
+        self.time = 0
+        self.error_integral = 0.0
+        self.previous_error = 0.0
+        self.ip_controlled = 0.0
+
+        # History buffers for analysis / plotting
+        self.j_target_history: list[float] = []
+        self.j_actual_history: list[float] = []
+        self.time_history: list[int] = []
+        self.error_history: list[float] = []
+        self.action_history: list[float] = []
+
+    def reset_state(self, state):
+        super().reset_state(state)
+        self._reset_controller_state()
+
+    @staticmethod
+    def _default_target(timestep: int) -> float:
+        """
+        Default j_target schedule (center current density) in Amps.
+        Keeps a flat 3 MA target with a late ramp to 4 MA.
+        """
+        if timestep < 60:
+            return 3.0e6
+        if timestep < 120:
+            return 3.5e6
+        return 4.0e6
+
+    def act(self, observation) -> dict:
+        """
+        Compute the next control command using PID on the center current density.
+        """
+        j_center = observation["profiles"]["j_total"][0]
+        j_target = self.get_j_target(self.time)
+
+        # Record for diagnostics
+        self.j_target_history.append(j_target)
+        self.j_actual_history.append(j_center)
+        self.time_history.append(self.time)
+
+        if self.time < 100:
+            error = j_target - j_center
+            self.error_history.append(error)
+
+            if self.time > 0:
+                error_derivative = (error - self.previous_error) / self.dt
+            else:
+                error_derivative = 0.0
+
+            # PID components
+            p_term = self.kp * error
+            i_term = self.ki * self.error_integral
+            d_term = self.kd * error_derivative
+            pid_output = p_term + i_term + d_term
+
+            ip_baseline = 3.0e6
+            ip_desired = ip_baseline + pid_output
+
+            max_change = self.ramp_rate * self.dt
+            is_ramp_limited = False
+
+            if self.time > 0:
+                ip_change = ip_desired - self.ip_controlled
+                if abs(ip_change) > max_change:
+                    is_ramp_limited = True
+                    ip_ramp_limited = self.ip_controlled + np.sign(ip_change) * max_change
+                else:
+                    ip_ramp_limited = ip_desired
+            else:
+                ip_ramp_limited = ip_desired
+
+            ip_final = float(np.clip(ip_ramp_limited, self.ip_min, self.ip_max))
+            is_power_limited = ip_final != ip_ramp_limited
+
+            if not (self.anti_windup_enabled and (is_ramp_limited or is_power_limited)):
+                self.error_integral += error * self.dt
+
+            self.ip_controlled = ip_final
+            self.previous_error = error
+        else:
+            # After 100 seconds keep the last command (flat-top)
+            self.error_history.append(self.previous_error)
+
+        action = {
+            "Ip": [self.ip_controlled],
+            "NBI": [float(_NBI_POWERS[0]), _R_NBI, _W_NBI],
+            "ECRH": [float(_ECCD_POWER[0]), 0.35, 0.05],
+        }
+
+        if self.time == 98:
+            action["ECRH"][0] = float(_ECCD_POWER[99])
+            action["NBI"][0] = float(_NBI_POWERS[1])
+
+        if self.time >= 99:
+            action["ECRH"][0] = float(_ECCD_POWER[100])
+            action["NBI"][0] = float(_NBI_POWERS[2])
+
+        self.time += 1
+        self.action_history.append(self.ip_controlled)
+
+        return action
+
+    @property
+    def anti_windup_enabled(self) -> bool:
+        return True

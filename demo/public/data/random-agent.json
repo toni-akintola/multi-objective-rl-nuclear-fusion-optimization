@@ -1,0 +1,66 @@
+{
+  "agent": "Random (No Guard)",
+  "episode_count": 10,
+  "episodes": [
+    {
+      "index": 1,
+      "reward": 3.231322162038239,
+      "length": 151
+    },
+    {
+      "index": 2,
+      "reward": 3.314588211483519,
+      "length": 151
+    },
+    {
+      "index": 3,
+      "reward": 3.484152993933792,
+      "length": 151
+    },
+    {
+      "index": 4,
+      "reward": 3.320730104129435,
+      "length": 151
+    },
+    {
+      "index": 5,
+      "reward": 3.235876569330941,
+      "length": 151
+    },
+    {
+      "index": 6,
+      "reward": 3.197179700166156,
+      "length": 151
+    },
+    {
+      "index": 7,
+      "reward": 3.212321405546396,
+      "length": 151
+    },
+    {
+      "index": 8,
+      "reward": 3.163614827537818,
+      "length": 151
+    },
+    {
+      "index": 9,
+      "reward": 3.235214232525317,
+      "length": 151
+    },
+    {
+      "index": 10,
+      "reward": 3.194080180115417,
+      "length": 151
+    }
+  ],
+  "statistics": {
+    "reward_mean": 3.2589080386807026,
+    "reward_std": 0.0887550079747483,
+    "reward_min": 3.163614827537818,
+    "reward_max": 3.484152993933792,
+    "length_mean": 151.0,
+    "length_std": 0.0,
+    "length_min": 151,
+    "length_max": 151
+  }
+}

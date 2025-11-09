@@ -1,0 +1,66 @@
+{
+  "agent": "PID Controller",
+  "episode_count": 10,
+  "episodes": [
+    {
+      "index": 1,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 2,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 3,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 4,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 5,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 6,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 7,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 8,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 9,
+      "reward": 1.6915570957141168,
+      "length": 151
+    },
+    {
+      "index": 10,
+      "reward": 1.6915570957141168,
+      "length": 151
+    }
+  ],
+  "statistics": {
+    "reward_mean": 1.6915570957141166,
+    "reward_std": 2.220446049250313e-16,
+    "reward_min": 1.6915570957141168,
+    "reward_max": 1.6915570957141168,
+    "length_mean": 151.0,
+    "length_std": 0.0,
+    "length_min": 151,
+    "length_max": 151
+  }
+}

@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { MagneticButton } from "@/components/magnetic-button"
 import { Tokamak2D } from "@/components/tokamak-2d"
 import { TokamakParticles } from "@/components/tokamak-particles"
@@ -132,6 +133,8 @@ export function FusionHeroSection() {
     }
   }
 
+  const router = useRouter()
+
   return (
     <section className="flex min-h-screen w-screen shrink-0 flex-col justify-end px-6 pb-16 pt-24 md:px-12 md:pb-24">
       <div className="max-w-3xl">
@@ -148,8 +151,9 @@ export function FusionHeroSection() {
           </span>
         </p>
         <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center">
-          <MagneticButton size="lg" variant="primary">
+          <MagneticButton size="lg" variant="primary" onClick={() => router.push("/visualizations/sac")}>
             Visualizations
+            
           </MagneticButton>
           <MagneticButton 
             size="lg" 
