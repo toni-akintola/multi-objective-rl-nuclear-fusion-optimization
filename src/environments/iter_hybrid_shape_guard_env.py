@@ -6,8 +6,8 @@ shape guard and vertical guard (VDE) penalties/bonuses to the reward based on pl
 """
 import gymnasium as gym
 from gymnasium import Wrapper
-import importlib.util
-from pathlib import Path
+from src.utils.shape_guard import shape_violation  # type: ignore
+from src.utils.vertical_guard import vertical_violation  # type: ignore
 
 
 class IterHybridShapeGuardEnv(Wrapper):
@@ -49,23 +49,8 @@ class IterHybridShapeGuardEnv(Wrapper):
         self.vertical_penalty = vertical_penalty if enable_vertical_guard else 0.0
         self.enable_vertical_guard = enable_vertical_guard
         
-        # Import shape guard module
-        spec = importlib.util.spec_from_file_location(
-            "shape_guard",
-            Path(__file__).parent / "optimization-for-constraints" / "shape_guard.py"
-        )
-        shape_guard = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(shape_guard)
-        self.shape_violation = shape_guard.shape_violation
-        
-        # Import vertical guard module
-        spec_vertical = importlib.util.spec_from_file_location(
-            "vertical_guard",
-            Path(__file__).parent / "optimization-for-constraints" / "vertical_guard.py"
-        )
-        vertical_guard = importlib.util.module_from_spec(spec_vertical)
-        spec_vertical.loader.exec_module(vertical_guard)
-        self.vertical_violation = vertical_guard.vertical_violation
+        self.shape_violation = shape_violation  # type: ignore[attr-defined]
+        self.vertical_violation = vertical_violation  # type: ignore[attr-defined]
         
         # Track previous state for both guards
         self.prev_state = None
