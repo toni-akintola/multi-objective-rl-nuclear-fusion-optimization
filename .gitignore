@@ -8,3 +8,12 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Generated outputs
+results/*.png
+*.png
+
+# Model checkpoints
+logs/*.zip
+
+sim_data
