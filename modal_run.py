@@ -28,7 +28,7 @@ VOLUME_DIR = "/cql-models"
 
 
 @app.function(
-    gpu="A100:2",  # Single A100 GPU
+    gpu="A100",  # Single A100 GPU
     cpu=16,  # 16 CPU cores for better data loading
     memory=32768,  # 32 GB RAM
     timeout=3600 * 4,  # 4 hour timeout
@@ -38,16 +38,18 @@ def train_cql_remote(
     dataset_filename: str = "offline_dataset.pkl",
     n_steps: int = 500000,
     batch_size: int = 1024,  # Increased to 8192 for better GPU utilization
-    save_interval: int = 50000,
+    save_interval: int = 10000,  # More frequent saves (was 50k)
+    checkpoint_path: str = None,  # Path to checkpoint to resume from
 ):
     """
     Train CQL agent on GPU.
 
     Args:
-        dataset_path: Path to local dataset file (will be uploaded)
+        dataset_filename: Dataset file in Modal volume
         n_steps: Number of training steps (500k recommended for A100)
         batch_size: Batch size (256 is good for A100)
-        save_interval: Save model every N steps
+        save_interval: Save model every N steps (default 10k for safety)
+        checkpoint_path: Optional path to checkpoint in volume to resume from
     """
     import pickle
     import torch
@@ -83,7 +85,6 @@ def train_cql_remote(
     print(f"Using {n_test_episodes} episodes for evaluation metrics")
 
     # Create CQL agent with GPU
-    print("\nCreating CQL agent on GPU...")
     device = "cuda:0" if torch.cuda.is_available() else "cpu:0"
 
     # Enable TF32 for faster training on A100
@@ -99,22 +100,52 @@ def train_cql_remote(
         StandardRewardScaler,
     )
 
-    # Use CQLConfig with proper scaling and stability constraints - d3rlpy 2.x API
-    cql = CQLConfig(
-        batch_size=batch_size,
-        observation_scaler=StandardObservationScaler(),  # Normalize observations
-        action_scaler=MinMaxActionScaler(),  # Scale actions to [-1, 1]
-        reward_scaler=StandardRewardScaler(),  # Normalize rewards
-        # Stability parameters to prevent divergence
-        actor_learning_rate=3e-5,  # Slower actor updates (was 1e-4)
-        critic_learning_rate=3e-4,  # Keep critic learning rate
-        temp_learning_rate=3e-5,  # Slower temperature updates (was 1e-4)
-        initial_temperature=1.0,  # Start with lower temperature
-    ).create(device=device)
+    # Check if resuming from checkpoint
+    if checkpoint_path:
+        checkpoint_full_path = Path(VOLUME_DIR) / checkpoint_path
+        if checkpoint_full_path.exists():
+            print(f"\nLoading checkpoint from {checkpoint_full_path}...")
+            from d3rlpy.algos import CQL
+            cql = CQL.from_json(
+                checkpoint_full_path / "params.json",
+                device=device
+            )
+            # Load model weights if they exist
+            model_file = checkpoint_full_path / "model.pt"
+            if model_file.exists():
+                cql.load_model(model_file)
+                print("Loaded model weights from checkpoint")
+            else:
+                print("Warning: No model weights found, starting with fresh weights")
+        else:
+            print(f"Warning: Checkpoint path {checkpoint_full_path} not found")
+            print("Starting training from scratch...")
+            checkpoint_path = None
+    
+    if not checkpoint_path:
+        print("\nCreating CQL agent on GPU...")
+        # Use CQLConfig with proper scaling and stability constraints - d3rlpy 2.x API
+        cql = CQLConfig(
+            batch_size=batch_size,
+            observation_scaler=StandardObservationScaler(),  # Normalize observations
+            action_scaler=MinMaxActionScaler(),  # Scale actions to [-1, 1]
+            reward_scaler=StandardRewardScaler(),  # Normalize rewards
+            # Balanced learning rates for actor-critic
+            actor_learning_rate=1e-4,  # Increased from 3e-5 to help actor learn
+            critic_learning_rate=3e-4,  # Keep critic learning rate
+            temp_learning_rate=1e-4,  # Increased to better control temperature
+            initial_temperature=0.1,  # Lower initial temp (was 1.0)
+            # CQL-specific parameters
+            conservative_weight=1.0,  # Reduced from 5.0 default - less aggressive penalty
+            alpha_threshold=10.0,  # Keep default
+        ).create(device=device)
 
-    print(f"CQL agent created on device: {device}")
+    print(f"CQL agent ready on device: {device}")
     print(f"Batch size: {batch_size}")
     print(f"Training steps: {n_steps}")
+    print(f"Save interval: {save_interval}")
+    if checkpoint_path:
+        print(f"Resuming from: {checkpoint_path}")
 
     # Setup save directory
     save_dir = Path(VOLUME_DIR) / "models" / "cql_torax"
@@ -174,6 +205,8 @@ def main(
     dataset_filename: str = "offline_dataset.pkl",
     n_steps: int = 500000,
     batch_size: int = 256,  # Increased for A100
+    save_interval: int = 10000,  # More frequent saves
+    checkpoint: str = None,  # Optional checkpoint to resume from
 ):
     """
     Local entrypoint that triggers remote training.
@@ -181,7 +214,11 @@ def main(
     Dataset should already be uploaded to Modal volume at: data/offline_dataset.pkl
 
     Usage:
+        # Start new training
         modal run modal_run.py --n-steps 500000
+        
+        # Resume from checkpoint
+        modal run modal_run.py --checkpoint models/cql_torax/cql_experiment_20251109065206
 
     To upload dataset first:
         modal volume put cql-models data/offline_dataset.pkl data/offline_dataset.pkl
@@ -191,8 +228,11 @@ def main(
     print(f"  Dataset: data/{dataset_filename}")
     print(f"  Steps: {n_steps:,}")
     print(f"  Batch size: {batch_size}")
-    print(f"  GPU: 1x A100")
+    print(f"  Save interval: {save_interval:,}")
+    print(f"  GPU: 2x A100")
     print(f"  CPU cores: 16")
+    if checkpoint:
+        print(f"  Resuming from: {checkpoint}")
     print()
 
     # Train on remote GPU
@@ -200,6 +240,8 @@ def main(
         dataset_filename=dataset_filename,
         n_steps=n_steps,
         batch_size=batch_size,
+        save_interval=save_interval,
+        checkpoint_path=checkpoint,
     )
 
     print(f"\nTraining completed! Model saved at: {model_path}")
