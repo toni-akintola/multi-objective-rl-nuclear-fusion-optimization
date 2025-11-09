@@ -8,7 +8,7 @@ export function VerticalPython() {
       const response = await fetch("/api/launch-vertical")
       const data = await response.json()
       if (data.success) {
-        alert("✅ Rotating 3D vertical guard visualization launched! A matplotlib window should open showing plasma vertical position with interactive coil disable/enable controls.")
+        alert("Rotating 3D vertical guard visualization launched! A matplotlib window should open showing plasma vertical position with interactive coil disable/enable controls.")
       } else {
         alert(`Error: ${data.error}`)
       }

@@ -574,7 +574,7 @@ export default function ChamberPage() {
                   const response = await fetch("/api/launch-python")
                   const data = await response.json()
                   if (data.success) {
-                    alert("✅ Python visualization launched! A matplotlib window should open.")
+                    alert("Python visualization launched! A matplotlib window should open.")
                   } else {
                     alert(`Error: ${data.error}`)
                   }
