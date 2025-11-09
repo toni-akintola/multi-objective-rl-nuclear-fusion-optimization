@@ -481,7 +481,7 @@ export default function ChamberPage() {
                 
                 {/* Real Tokamak Savings */}
                 <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">🏭 Real Tokamak Savings</h4>
+                  <h4 className="mb-3 font-sans font-semibold text-foreground">Real Tokamak Savings</h4>
                   <div className="grid gap-3 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Disruptions prevented:</span>
@@ -504,7 +504,7 @@ export default function ChamberPage() {
                 
                 {/* Training Savings */}
                 <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">💻 Training Cost Savings</h4>
+                  <h4 className="mb-3 font-sans font-semibold text-foreground">Training Cost Savings</h4>
                   <div className="grid gap-3 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Episode length improvement:</span>
@@ -527,7 +527,7 @@ export default function ChamberPage() {
                 
                 {/* Importance Scores */}
                 <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">⭐ Importance Scores</h4>
+                  <h4 className="mb-3 font-sans font-semibold text-foreground">Importance Scores</h4>
                   <div className="grid gap-3 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Overall importance:</span>
