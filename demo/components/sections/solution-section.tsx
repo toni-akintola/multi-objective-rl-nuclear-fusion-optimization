@@ -16,9 +16,9 @@ export function SolutionSection() {
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
-          <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 02. THE APPROACH</p>
+          <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 02. THE SOLUTION</p>
           <h2 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
-            <span className="text-balance">Why Traditional Control Fails</span>
+            <span className="text-balance">Reinforcement Learning for Plasma Control</span>
           </h2>
         </div>
 
@@ -32,22 +32,23 @@ export function SolutionSection() {
               style={{ transitionDelay: "100ms" }}
             >
               <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
-                PID Controllers Are Reactive, Not Adaptive
+                Why Reinforcement Learning?
               </h3>
-              <div className="space-y-3 leading-relaxed text-foreground/70 md:text-lg">
-                <p>
-                  A PID controller is <span className="text-foreground/90">reactive</span>, not adaptive. It reacts to
-                  errors after they occur, instead of anticipating or learning from them.
-                </p>
-                <p>
-                  It assumes the system behaves <span className="text-foreground/90">linearly</span>, which plasma does
-                  not. It struggles when control actions are <span className="text-foreground/90">interdependent</span> —
-                  like adjusting coils and beams together.
-                </p>
-                <p className="pt-2">
-                  So while PID controllers are still used in fusion experiments for basic subsystems, they can't handle
-                  global plasma stabilization alone.
-                </p>
+              <p className="mb-4 leading-relaxed text-foreground/70 md:text-lg">
+                Reinforcement Learning, unlike PID, can:
+              </p>
+              <div className="space-y-3">
+                {[
+                  "Learn complex, nonlinear dynamics directly from interaction",
+                  "Adapt to changes in the system over time",
+                  "Optimize multiple objectives simultaneously (e.g., stability and energy efficiency)",
+                  "Coordinate multiple actuators intelligently",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent" />
+                    <p className="text-foreground/70 md:text-lg">{item}</p>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -56,22 +57,22 @@ export function SolutionSection() {
                 className={`transition-all duration-700 ${
                   isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
                 }`}
-                style={{ transitionDelay: "500ms" }}
+                style={{ transitionDelay: "300ms" }}
               >
-                <h3 className="mb-6 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
-                  Soft Actor-Critic: Building Adaptive Controllers
+                <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+                  The Bottleneck: Why Online Training Failed
                 </h3>
                 <p className="mb-4 leading-relaxed text-foreground/70 md:text-lg">
-                  Our controller is based on Soft Actor-Critic (SAC)—a modern RL algorithm built for continuous control. The
-                  actor learns by maximizing not just the reward from the environment, but also{" "}
-                  <span className="text-foreground/90">entropy</span>—a measure of uncertainty or randomness in its
-                  decisions.
+                  <span className="text-foreground/90">TORAX is too slow</span> for online RL training. The physics-based simulation solves coupled PDEs sequentially, making it CPU-bound and impossible to parallelize.
                 </p>
-                <p className="leading-relaxed text-foreground/70 md:text-lg">
-                  In most RL algorithms, the goal is to find a deterministic policy: always take the single best action for
-                  each state. But in complex, chaotic systems like plasma physics, being too deterministic too early can
-                  trap the agent in suboptimal behavior. SAC keeps the exploration window open, discovering better
-                  strategies over time.
+                <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-4 font-mono text-sm">
+                  <div className="mb-2 text-foreground/90">Online Training Performance:</div>
+                  <div className="text-foreground/70">Steps per second: ~2-5 steps/sec</div>
+                  <div className="text-foreground/70">Time for 1M steps: ~55-115 hours</div>
+                  <div className="text-foreground/70">GPU utilization: &lt;10%</div>
+                </div>
+                <p className="mt-4 leading-relaxed text-foreground/70 md:text-lg">
+                  Training online would take <span className="text-foreground/90">days to weeks</span> per experiment, making hyperparameter tuning impractical and killing research velocity.
                 </p>
               </div>
             </div>
@@ -79,32 +80,48 @@ export function SolutionSection() {
 
           {/* Right Column */}
           <div className="space-y-8">
+            <div
+              className={`transition-all duration-700 ${
+                isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
+              }`}
+              style={{ transitionDelay: "200ms" }}
+            >
+              <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+                The Pivot: Offline Reinforcement Learning
+              </h3>
+              <p className="mb-4 leading-relaxed text-foreground/70 md:text-lg">
+                <span className="text-foreground/90">Key Insight: Decouple data collection from training</span>
+              </p>
+              <div className="space-y-3 leading-relaxed text-foreground/70 md:text-lg">
+                <p>
+                  <span className="font-semibold text-foreground/90">Step 1:</span> Generate data once using TORAX (slow, but one-time cost)
+                </p>
+                <p>
+                  <span className="font-semibold text-foreground/90">Step 2:</span> Train on that data using GPU-accelerated offline RL (fast, repeatable)
+                </p>
+              </div>
+            </div>
+
             <div className="border-t border-foreground/10 pt-8">
               <div
                 className={`transition-all duration-700 ${
                   isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
                 }`}
-                style={{ transitionDelay: "200ms" }}
+                style={{ transitionDelay: "400ms" }}
               >
-                <p className="mb-8 font-mono text-sm text-accent md:text-base">Reinforcement Learning Can:</p>
-                <div className="space-y-4">
-                  {[
-                    "Learn complex, nonlinear dynamics directly from interaction",
-                    "Adapt to changes in the system over time",
-                    "Optimize multiple objectives simultaneously (e.g., stability and energy efficiency)",
-                    "Coordinate multiple actuators intelligently",
-                  ].map((item, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-start gap-4 transition-all duration-700 ${
-                        isVisible ? "translate-x-0 opacity-100" : "-translate-x-8 opacity-0"
-                      }`}
-                      style={{ transitionDelay: `${300 + i * 100}ms` }}
-                    >
-                      <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-accent" />
-                      <p className="text-foreground/70 md:text-lg">{item}</p>
-                    </div>
-                  ))}
+                <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+                  Conservative Q-Learning (CQL)
+                </h3>
+                <p className="mb-4 leading-relaxed text-foreground/70 md:text-lg">
+                  We use <span className="text-foreground/90">CQL</span> — an offline RL algorithm designed to learn from fixed datasets. It includes a conservative penalty that prevents overestimation of unseen actions, enabling stable training without environment interaction.
+                </p>
+                <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-4">
+                  <div className="mb-2 font-mono text-sm text-foreground/90">Training Performance:</div>
+                  <div className="space-y-1 text-sm text-foreground/70">
+                    <div><span className="font-semibold">Offline (CQL):</span> ~52 steps/sec, 2.7 hours for 500k steps</div>
+                    <div><span className="font-semibold">Speedup:</span> 10-25x faster than online</div>
+                    <div><span className="font-semibold">GPU utilization:</span> 60-90% (vs &lt;10% online)</div>
+                  </div>
                 </div>
               </div>
             </div>

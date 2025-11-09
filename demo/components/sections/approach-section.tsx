@@ -16,9 +16,9 @@ export function ApproachSection() {
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
-          <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 03. OUR IMPLEMENTATION</p>
+          <p className="mb-4 font-mono text-sm text-accent md:text-base">/ 03. OUR APPROACH</p>
           <h2 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl lg:text-7xl">
-            <span className="text-balance">Training in the Simulation</span>
+            <span className="text-balance">Offline RL Training Pipeline</span>
           </h2>
         </div>
 
@@ -31,10 +31,12 @@ export function ApproachSection() {
               }`}
               style={{ transitionDelay: "100ms" }}
             >
-              <h3 className="mb-4 font-mono text-sm text-accent">Step 1: Environment Setup</h3>
+              <h3 className="mb-4 font-mono text-sm text-accent">Step 1: Data Generation with TORAX</h3>
               <p className="leading-relaxed text-foreground/70 md:text-lg">
-                We train an RL agent (Soft Actor-Critic) inside the <span className="text-foreground/90">gym-TORAX</span>{" "}
-                simulation—a physics-accurate tokamak environment built from real fusion data.
+                Generate simulation data once using <span className="text-foreground/90">gym-TORAX</span> — a physics-accurate tokamak environment. We collected <span className="text-foreground/90">3.86M transitions</span> across 10 episodes, including observations (plasma parameters), actions (Ip, NBI, ECRH controls), and rewards.
+              </p>
+              <p className="mt-3 leading-relaxed text-foreground/70 md:text-lg">
+                Data collection took <span className="text-foreground/90">~30 minutes</span> (one-time cost), but this data can be reused for unlimited training iterations.
               </p>
             </div>
 
@@ -44,10 +46,9 @@ export function ApproachSection() {
               }`}
               style={{ transitionDelay: "300ms" }}
             >
-              <h3 className="mb-4 font-mono text-sm text-accent">Step 3: Control Actions</h3>
+              <h3 className="mb-4 font-mono text-sm text-accent">Step 3: GPU-Scale Training on Modal</h3>
               <p className="leading-relaxed text-foreground/70 md:text-lg">
-                The agent learns to output control actions: adjusting coil currents, ECRH (electron cyclotron resonance
-                heating) power, and NBI (neutral beam injection) power to maintain stable, efficient plasma.
+                Train CQL on <span className="text-foreground/90">4x A100 GPUs</span> with optimized settings: batch size 4096, TF32 precision, and observation/action/reward scaling. Training completes in <span className="text-foreground/90">2.7 hours</span> for 500k steps with 60-90% GPU utilization.
               </p>
             </div>
 
@@ -58,17 +59,9 @@ export function ApproachSection() {
                 }`}
                 style={{ transitionDelay: "500ms" }}
               >
-                <h3 className="mb-4 font-mono text-sm text-accent">Step 5: Distributed Training at Scale</h3>
-                <p className="mb-4 leading-relaxed text-foreground/70 md:text-lg">
-                  Training the SAC agent efficiently required substantial computational resources. We leveraged{" "}
-                  <span className="text-foreground/90">Modal</span>'s multi-container orchestration to parallelize
-                  training across distributed GPU infrastructure, managing complex workloads and data pipelines
-                  automatically.
-                </p>
+                <h3 className="mb-4 font-mono text-sm text-accent">Step 5: Online Evaluation</h3>
                 <p className="leading-relaxed text-foreground/70 md:text-lg">
-                  This approach allowed us to iterate quickly and scale experiments, resulting in an agent that performs{" "}
-                  <span className="text-foreground/90">8x better than random search</span>—a substantial improvement in
-                  control performance over naive baseline strategies.
+                  After training, we evaluate the CQL policy in the <span className="text-foreground/90">actual online gym-TORAX environment</span>. The trained policy generalizes to the live simulation without fine-tuning, demonstrating that offline RL successfully learned the plasma control dynamics.
                 </p>
               </div>
             </div>
@@ -82,11 +75,20 @@ export function ApproachSection() {
               }`}
               style={{ transitionDelay: "200ms" }}
             >
-              <h3 className="mb-4 font-mono text-sm text-accent">Step 2: Physical Signals</h3>
+              <h3 className="mb-4 font-mono text-sm text-accent">Step 2: Offline Training with CQL</h3>
               <p className="leading-relaxed text-foreground/70 md:text-lg">
-                The environment provides rich physical signals: plasma current, electron temperature, magnetic field
-                profiles, safety factor, and more. The agent observes and learns from these signals.
+                Train <span className="text-foreground/90">Conservative Q-Learning (CQL)</span> on the fixed dataset. CQL includes a conservative penalty that prevents overestimation of unseen actions, enabling stable training without environment interaction.
               </p>
+              <div className="mt-4 rounded-lg border border-foreground/10 bg-foreground/5 p-4 font-mono text-sm">
+                <div className="text-foreground/90 mb-2">Key Optimizations:</div>
+                <div className="space-y-1 text-foreground/70 text-xs">
+                  <div>• StandardObservationScaler</div>
+                  <div>• MinMaxActionScaler</div>
+                  <div>• StandardRewardScaler</div>
+                  <div>• TF32 precision (3x speedup)</div>
+                  <div>• Large batch sizes (4096)</div>
+                </div>
+              </div>
             </div>
 
             <div
@@ -97,8 +99,7 @@ export function ApproachSection() {
             >
               <h3 className="mb-4 font-mono text-sm text-accent">Step 4: Reward Signal</h3>
               <p className="leading-relaxed text-foreground/70 md:text-lg">
-                Reward is designed to measure how closely the plasma stays to its target profile and how stable it
-                remains. The agent is incentivized to minimize crashes while maintaining efficiency.
+                Reward measures how closely the plasma stays to its target profile and how stable it remains. The agent optimizes for <span className="text-foreground/90">fusion gain, H98, q_min, and q95</span> — balancing stability and energy efficiency.
               </p>
             </div>
 
@@ -110,10 +111,7 @@ export function ApproachSection() {
                 style={{ transitionDelay: "600ms" }}
               >
                 <p className="leading-relaxed text-foreground/70 md:text-lg">
-                  Through iterative training, the agent develops a control policy that can anticipate plasma instabilities
-                  and correct them before they occur—something traditional PID controllers simply cannot do.
-                  Our result is a controller that learns the deep structure of plasma dynamics and adapts in real-time to
-                  new conditions, bringing us closer to the dream of practical, sustainable fusion energy.
+                  The result: a controller that learns the deep structure of plasma dynamics and adapts in real-time to new conditions, bringing us closer to practical, sustainable fusion energy.
                 </p>
               </div>
             </div>

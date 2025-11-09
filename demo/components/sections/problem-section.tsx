@@ -22,68 +22,73 @@ export function ProblemSection() {
           </h2>
         </div>
 
-        <div className="space-y-8 md:space-y-10">
-          <div
-            className={`transition-all duration-700 ${
-              isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
-            }`}
-            style={{ transitionDelay: "100ms" }}
-          >
-            <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
-              Unlimited Clean Energy Awaits
-            </h3>
-            <p className="max-w-2xl leading-relaxed text-foreground/70 md:text-lg">
-              Fusion has the potential to deliver virtually limitless, carbon-free electricity using fuel derived from
-              seawater and producing no long-lived radioactive waste. If achieved, it could end our dependence on fossil
-              fuels and fundamentally reshape the world's energy infrastructure.
-            </p>
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">
+          {/* Left Column */}
+          <div className="space-y-8">
+            <div
+              className={`transition-all duration-700 ${
+                isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
+              }`}
+              style={{ transitionDelay: "100ms" }}
+            >
+              <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+                Unlimited Clean Energy Awaits
+              </h3>
+              <p className="leading-relaxed text-foreground/70 md:text-lg">
+                Fusion has the potential to deliver <span className="text-foreground/90">virtually limitless, carbon-free electricity</span>, using fuel derived from seawater and producing no long-lived radioactive waste. If achieved, it could end our dependence on fossil fuels and fundamentally reshape the world's energy infrastructure.
+              </p>
+            </div>
+
+            <div
+              className={`transition-all duration-700 ${
+                isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
+              }`}
+              style={{ transitionDelay: "300ms" }}
+            >
+              <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+                Highly Nonlinear Dynamics
+              </h3>
+              <p className="leading-relaxed text-foreground/70 md:text-lg">
+                In a fusion tokamak, the dynamics are <span className="text-foreground/90">highly nonlinear</span> — small changes can trigger massive instabilities. They're <span className="text-foreground/90">coupled across dimensions</span> — magnetic, thermal, and current feedback interact. And they're <span className="text-foreground/90">time-varying</span> — plasma behavior evolves rapidly during the reaction.
+              </p>
+            </div>
           </div>
 
-          <div
-            className={`transition-all duration-700 ${
-              isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
-            }`}
-            style={{ transitionDelay: "200ms" }}
-          >
-            <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
-              But One Enormous Challenge Remains
-            </h3>
-            <p className="max-w-2xl leading-relaxed text-foreground/70 md:text-lg">
-              Inside a fusion reactor—a tokamak—hydrogen fuel is heated to over 100 million degrees Celsius, forming a
-              superheated plasma. This plasma must be kept perfectly suspended by magnetic fields, never touching the
-              reactor walls.
-            </p>
-          </div>
+          {/* Right Column */}
+          <div className="space-y-8">
+            <div
+              className={`transition-all duration-700 ${
+                isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
+              }`}
+              style={{ transitionDelay: "200ms" }}
+            >
+              <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+                The Control Challenge
+              </h3>
+              <p className="leading-relaxed text-foreground/70 md:text-lg">
+                Inside a fusion reactor — a tokamak — hydrogen fuel is heated to over <span className="text-foreground/90">100 million degrees Celsius</span>, forming a superheated plasma. This plasma must be <span className="text-foreground/90">kept perfectly suspended by magnetic fields</span>, never touching the reactor walls.
+              </p>
+              <p className="mt-4 leading-relaxed text-foreground/70 md:text-lg">
+                Even tiny instabilities, magnetic drifts, or fluctuations in current can cause the plasma to <span className="text-foreground/90">collapse in milliseconds</span>, halting the reaction and potentially damaging the reactor.
+              </p>
+            </div>
 
-          <div
-            className={`transition-all duration-700 ${
-              isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
-            }`}
-            style={{ transitionDelay: "300ms" }}
-          >
-            <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
-              Millisecond Instability Window
-            </h3>
-            <p className="max-w-2xl leading-relaxed text-foreground/70 md:text-lg">
-              Even tiny instabilities, magnetic drifts, or fluctuations in current can cause the plasma to collapse in
-              milliseconds, halting the reaction and potentially damaging the reactor.
-            </p>
-          </div>
-
-          <div
-            className={`transition-all duration-700 ${
-              isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
-            }`}
-            style={{ transitionDelay: "400ms" }}
-          >
-            <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
-              System Complexity
-            </h3>
-            <p className="max-w-2xl leading-relaxed text-foreground/70 md:text-lg">
-              Plasma dynamics are highly nonlinear—small perturbations can trigger massive instabilities. Magnetic,
-              thermal, and current feedback loops couple across dimensions, constantly interacting. Conditions evolve
-              over milliseconds, demanding control strategies that adapt in real time.
-            </p>
+            <div
+              className={`transition-all duration-700 ${
+                isVisible ? "translate-x-0 opacity-100" : "-translate-x-12 opacity-0"
+              }`}
+              style={{ transitionDelay: "400ms" }}
+            >
+              <h3 className="mb-4 font-sans text-2xl font-light text-foreground/90 md:text-3xl">
+                Why PID Controllers Fail
+              </h3>
+              <p className="leading-relaxed text-foreground/70 md:text-lg">
+                A PID controller is <span className="text-foreground/90">reactive</span>, not adaptive. It reacts to errors after they occur, instead of anticipating or learning from them. It assumes the system behaves <span className="text-foreground/90">linearly</span>, which plasma does not. It struggles when control actions are <span className="text-foreground/90">interdependent</span> — like adjusting coils and beams together.
+              </p>
+              <p className="mt-4 leading-relaxed text-foreground/70 md:text-lg">
+                So while PID controllers are still used in fusion experiments for basic subsystems (e.g., coil currents, vacuum pressure), <span className="text-foreground/90">they can't handle global plasma stabilization alone</span>.
+              </p>
+            </div>
           </div>
         </div>
       </div>

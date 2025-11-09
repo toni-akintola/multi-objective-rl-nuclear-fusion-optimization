@@ -19,6 +19,7 @@ export function Navigation({ isLoaded, variant = "home" }: NavigationProps) {
     { label: "Solution", type: "link", href: "/solution" },
     { label: "Approach", type: "link", href: "/approach" },
     { label: "Plasma", type: "link", href: "/plasma" },
+    { label: "References", type: "link", href: "/references" },
   ]
 
   return (
