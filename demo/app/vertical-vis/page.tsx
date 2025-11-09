@@ -190,14 +190,14 @@ export default function VerticalVisPage() {
           <div className="mb-16">
             <div className="grid gap-6 md:grid-cols-2">
               <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6 backdrop-blur-md">
-                <div className="mb-2 font-mono text-sm font-semibold text-blue-400">Z Position</div>
+                <div className="mb-2 font-mono text-sm font-semibold text-foreground/90">Z Position</div>
                 <div className="mb-2 font-sans text-lg font-medium text-foreground">Vertical Location</div>
                 <p className="text-sm text-foreground/70">
                   Height of plasma center in the tokamak. Safe range: -5cm to +5cm from magnetic axis
                 </p>
               </div>
               <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6 backdrop-blur-md">
-                <div className="mb-2 font-mono text-sm font-semibold text-green-400">dZ/dt</div>
+                <div className="mb-2 font-mono text-sm font-semibold text-foreground/90">dZ/dt</div>
                 <div className="mb-2 font-sans text-lg font-medium text-foreground">Vertical Velocity</div>
                 <p className="text-sm text-foreground/70">
                   How fast the plasma is moving up or down. Must be kept below 0.5 cm/step
