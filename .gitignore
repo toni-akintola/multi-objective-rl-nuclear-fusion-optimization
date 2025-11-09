@@ -9,13 +9,28 @@ wheels/
 # Virtual environments
 .venv
 
-# Generated outputs
-results/*.png
-*.png
-
 # Model checkpoints
 logs/*.zip
 
+# Data files
+*.pkl
+
+# Generated outputs (add back specific plots if needed)
+*.png
+!demo/**/*.png
+results/
+
+# Simulation data
 sim_data
 
-*.pkl
+# Jupyter
+notebooks/.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

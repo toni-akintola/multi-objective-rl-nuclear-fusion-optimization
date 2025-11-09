@@ -32,40 +32,65 @@ Then open `http://localhost:8501` in your browser to:
 ### Animation
 ```bash
 # Standalone animation with custom speed
-python animate_shape.py 0.5  # Slow motion (0.5x speed)
-python animate_shape.py 2.0  # Fast forward (2x speed)
-python animate_shape.py 1.0 200  # Normal speed, 200 steps
+python src/visualization/animate_shape.py 0.5  # Slow motion (0.5x speed)
+python src/visualization/animate_shape.py 2.0  # Fast forward (2x speed)
+python src/visualization/animate_shape.py 1.0 200  # Normal speed, 200 steps
 ```
 
 ## 📁 Project Structure
 
 ```
 nuclear/
-├── agent.py                    # Agent implementations (Random, SAC wrapper)
-├── main.py                     # Main evaluation script with shape guard
-├── app.py                      # Streamlit web interface
-├── animate_shape.py            # Animated trajectory visualization
-├── sac_shape_guard.py          # SAC agent with shape constraints
-├── test_multi_env.py           # Environment benchmarking
-├── modal_run.py                # Modal deployment script
+├── src/                        # Source code
+│   ├── agents/                 # Agent implementations
+│   │   └── agent.py
+│   ├── environments/           # Custom environments
+│   │   └── iter_hybrid_shape_guard_env.py
+│   ├── visualization/          # Visualization tools
+│   │   ├── animate_shape.py
+│   │   ├── visualize_chamber_live.py
+│   │   ├── visualize_vertical_3d.py
+│   │   └── visualize_vertical_live.py
+│   ├── servers/                # Web servers & APIs
+│   │   ├── api_server.py
+│   │   ├── chamber_web_server.py
+│   │   └── chamber_websocket_server.py
+│   └── utils/                  # Utilities
+│       └── shape_guard.py
 │
-├── eval/                       # Evaluation scripts
-│   ├── rand_eval.py           # Random agent evaluation
-│   └── sac_eval.py            # SAC agent evaluation
+├── scripts/                    # Executable scripts
+│   ├── build_dataset.py
+│   ├── launch_visualization.py
+│   └── test_multi_env.py
 │
 ├── train/                      # Training scripts
-│   └── sac_train.py           # SAC training pipeline
+│   ├── offline_train.py
+│   └── sac_train.py
 │
-├── optimization-for-constraints/
-│   └── shape_guard.py         # Shape constraint definitions
+├── eval/                       # Evaluation scripts
+│   ├── cql_online_eval.py
+│   ├── rand_eval.py
+│   ├── sac_eval.py
+│   └── surrogate_eval.py
 │
-├── logs/                       # Trained model checkpoints
-│   └── sac_torax_*.zip        # SAC models at various training steps
+├── tests/                      # Test files
+│   └── test_surrogate_inference.py
 │
-├── vm/                         # Cloud deployment configs
-│   └── tpu_cluster.yaml       # TPU cluster configuration
+├── docs/                       # Documentation
+│   ├── ANALYSIS.md
+│   ├── TRAINING.md
+│   ├── VISUALIZATION.md
+│   ├── SURROGATE_MODEL.md
+│   └── CHANGELOG.md
 │
-└── results/                    # Generated visualizations (auto-created)
+├── data/                       # Data processing
+├── models/                     # Saved models
+├── demo/                       # Frontend demo
+├── logs/                       # Training logs
+│
+├── app.py                      # Streamlit app
+├── main.py                     # Main entry point
+└── modal_*.py                  # Modal deployment scripts
 ```
 
 ## 🎯 Features
@@ -152,7 +177,7 @@ agent = RandomAgent(
 ```
 
 ### Constraint Tuning
-Edit `optimization-for-constraints/shape_guard.py` to adjust:
+Edit `src/utils/shape_guard.py` to adjust:
 - `BETA_N_MIN`, `BETA_N_MAX`
 - `QMIN_MIN`
 - `Q95_MIN`, `Q95_MAX`
@@ -168,8 +193,8 @@ Edit `optimization-for-constraints/shape_guard.py` to adjust:
 - Check corrective logic in `agent.py`
 
 **Streamlit app issues?**
-- Ensure dependencies installed: `pip install streamlit pandas`
-- Check that `agent.py` and `shape_guard.py` are accessible
+- Ensure dependencies installed: `uv sync`
+- Check that imports are working correctly
 
 ## 📚 Dependencies
 
