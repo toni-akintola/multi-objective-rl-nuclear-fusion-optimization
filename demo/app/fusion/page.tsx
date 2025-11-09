@@ -144,13 +144,25 @@ function FusionPageContent() {
         </button>
 
         <div className="hidden items-center gap-8 md:flex">
-          {["Problem", "Solution", "Approach", "Plasma", "Insights"].map((item, index) => {
-            // Plasma links to chamber page, others scroll to sections
+          {["Problem", "Solution", "Approach", "Plasma", "Vertical", "Insights"].map((item, index) => {
+            // Plasma links to chamber page, Vertical links to vertical-vis page
             if (item === "Plasma") {
               return (
                 <Link
                   key={item}
                   href="/chamber"
+                  className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
+                >
+                  {item}
+                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
+                </Link>
+              )
+            }
+            if (item === "Vertical") {
+              return (
+                <Link
+                  key={item}
+                  href="/vertical-vis"
                   className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
                 >
                   {item}
@@ -184,10 +196,6 @@ function FusionPageContent() {
             )
           })}
         </div>
-
-        <MagneticButton variant="secondary" onClick={() => scrollToSection(3)}>
-          Learn More
-        </MagneticButton>
       </nav>
 
       <div

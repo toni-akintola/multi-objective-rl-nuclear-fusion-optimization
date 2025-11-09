@@ -5,6 +5,7 @@ import { CustomCursor } from "@/components/custom-cursor"
 import { GrainOverlay } from "@/components/grain-overlay"
 import { useRef, useEffect, useState } from "react"
 import Link from "next/link"
+import { useReveal } from "@/hooks/use-reveal"
 
 // Dynamically import shader components to avoid SSR issues
 const ShaderBackground = dynamic(
@@ -48,6 +49,7 @@ const ShaderBackground = dynamic(
 export default function ChamberPage() {
   const [isLoaded, setIsLoaded] = useState(false)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
+  const { ref: revealRef, isVisible } = useReveal(0.2)
   
   // Calculator state
   const [calcValues, setCalcValues] = useState({
@@ -193,8 +195,8 @@ export default function ChamberPage() {
         </Link>
 
         <div className="hidden items-center gap-8 md:flex">
-          {["Problem", "Solution", "Approach", "Plasma", "Insights"].map((item, index) => {
-            // Plasma is active on this page, others link back to fusion page
+          {["Problem", "Solution", "Approach", "Plasma", "Vertical", "Insights"].map((item, index) => {
+            // Plasma is active on this page
             if (item === "Plasma") {
               return (
                 <button
@@ -206,11 +208,31 @@ export default function ChamberPage() {
                 </button>
               )
             }
-            // Link back to fusion page
+            // Vertical links to vertical-vis page
+            if (item === "Vertical") {
+              return (
+                <Link
+                  key={item}
+                  href="/vertical-vis"
+                  className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
+                >
+                  {item}
+                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
+                </Link>
+              )
+            }
+            // Map to fusion page sections
+            const sectionMap: Record<string, number> = {
+              "Problem": 1,
+              "Solution": 2,
+              "Approach": 3,
+              "Insights": 3
+            }
+            const sectionIndex = sectionMap[item] ?? 0
             return (
               <Link
                 key={item}
-                href="/fusion"
+                href={`/fusion?section=${sectionIndex}`}
                 className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
               >
                 {item}
@@ -228,7 +250,12 @@ export default function ChamberPage() {
       >
         <div className="w-full max-w-4xl">
           {/* Header */}
-          <div className="mb-12 text-center">
+          <div
+            ref={revealRef as React.RefObject<HTMLDivElement>}
+            className={`mb-12 text-center transition-all duration-700 ${
+              isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
+            }`}
+          >
             <div className="mb-4 inline-block rounded-full border border-foreground/20 bg-foreground/15 px-4 py-1.5 backdrop-blur-md">
               <p className="font-mono text-xs text-foreground/90">Safety Monitoring Systems</p>
             </div>
@@ -250,7 +277,7 @@ export default function ChamberPage() {
             
             <div className="grid gap-6 md:grid-cols-3">
               <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6">
-                <div className="mb-2 font-mono text-sm font-semibold text-blue-400">β_N</div>
+                <div className="mb-2 font-mono text-sm font-semibold text-foreground/90">β_N</div>
                 <div className="mb-2 font-sans text-lg font-medium text-foreground">Normalized Beta</div>
                 <p className="text-sm text-foreground/70">
                   Plasma pressure vs magnetic field strength. Too high → disruptions. Safe range: 0.5 - 3.0
@@ -258,7 +285,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6">
-                <div className="mb-2 font-mono text-sm font-semibold text-green-400">q_min</div>
+                <div className="mb-2 font-mono text-sm font-semibold text-foreground/90">q_min</div>
                 <div className="mb-2 font-sans text-lg font-medium text-foreground">Minimum Safety Factor</div>
                 <p className="text-sm text-foreground/70">
                   Prevents internal instabilities. Too low → internal disruptions. Must be ≥ 1.0
@@ -266,7 +293,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6">
-                <div className="mb-2 font-mono text-sm font-semibold text-orange-400">q95</div>
+                <div className="mb-2 font-mono text-sm font-semibold text-foreground/90">q95</div>
                 <div className="mb-2 font-sans text-lg font-medium text-foreground">Edge Safety Factor</div>
                 <p className="text-sm text-foreground/70">
                   Prevents edge disruptions and ELMs. Safe range: 3.0 - 5.0
@@ -281,7 +308,7 @@ export default function ChamberPage() {
             
             <div className="mb-6 space-y-4">
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400">!</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Prevents Disruptions</div>
                   <p className="text-sm text-foreground/70">
@@ -291,7 +318,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400">✓</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Enables Self-Correction</div>
                   <p className="text-sm text-foreground/70">
@@ -301,7 +328,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">⚡</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Massive Cost Savings</div>
                   <p className="text-sm text-foreground/70">
@@ -311,7 +338,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-purple-400">🚀</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Training Efficiency</div>
                   <p className="text-sm text-foreground/70">
@@ -463,83 +490,83 @@ export default function ChamberPage() {
             
             {/* Results */}
             {results && (
-              <div className="space-y-6 rounded-lg border border-foreground/10 bg-gradient-to-br from-green-500/10 to-blue-500/10 p-6">
+              <div className="space-y-8 rounded-lg border border-foreground/10 bg-gradient-to-br from-green-500/10 to-blue-500/10 p-6">
                 <h3 className="font-sans text-xl font-semibold text-foreground">Results</h3>
                 
                 {/* Real Tokamak Savings */}
-                <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">🏭 Real Tokamak Savings</h4>
-                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-lg bg-foreground/5 p-5">
+                  <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Real Tokamak Savings</h4>
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Disruptions prevented:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.tokamak.disruptionsPrevented.toFixed(1)}</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.disruptionsPrevented.toFixed(1)}</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Prevention rate:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.tokamak.preventionRate.toFixed(1)}%</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.preventionRate.toFixed(1)}%</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Annual savings:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">${(results.tokamak.annualSavings / 1_000_000).toFixed(1)}M</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">${(results.tokamak.annualSavings / 1_000_000).toFixed(1)}M</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">ROI:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.tokamak.roi.toFixed(1)}%</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.roi.toFixed(1)}%</span>
                     </div>
                   </div>
                 </div>
                 
                 {/* Training Savings */}
-                <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">💻 Training Cost Savings</h4>
-                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-lg bg-foreground/5 p-5">
+                  <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Training Cost Savings</h4>
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Episode length improvement:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">+{results.training.episodeLengthImprovement.toFixed(1)}%</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">+{results.training.episodeLengthImprovement.toFixed(1)}%</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Convergence speedup:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">{results.training.convergenceSpeedup.toFixed(1)}x</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.training.convergenceSpeedup.toFixed(1)}x</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Time savings:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">{results.training.timeSavings.toFixed(1)} hours</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.training.timeSavings.toFixed(1)} hours</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Training cost savings:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">${results.training.trainingCostSavings.toFixed(2)}</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">${results.training.trainingCostSavings.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
                 
                 {/* Importance Scores */}
-                <div className="rounded-lg bg-foreground/5 p-4">
-                  <h4 className="mb-3 font-sans font-semibold text-foreground">⭐ Importance Scores</h4>
-                  <div className="grid gap-3 text-sm md:grid-cols-2">
+                <div className="rounded-lg bg-foreground/5 p-5">
+                  <h4 className="mb-4 font-sans text-lg font-semibold text-foreground">Importance Scores</h4>
+                  <div className="grid gap-4 text-sm md:grid-cols-2">
                     <div>
                       <span className="text-foreground/60">Overall importance:</span>
-                      <span className="ml-2 font-mono text-lg font-bold text-purple-400">{results.importance.overallImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono text-lg font-bold text-foreground">{results.importance.overallImportance.toFixed(1)}/100</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Tokamak importance:</span>
-                      <span className="ml-2 font-mono font-semibold text-green-400">{results.importance.tokamakImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.tokamakImportance.toFixed(1)}/100</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Training importance:</span>
-                      <span className="ml-2 font-mono font-semibold text-blue-400">{results.importance.trainingImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.trainingImportance.toFixed(1)}/100</span>
                     </div>
                     <div>
                       <span className="text-foreground/60">Safety importance:</span>
-                      <span className="ml-2 font-mono font-semibold text-orange-400">{results.importance.safetyImportance.toFixed(1)}/100</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.safetyImportance.toFixed(1)}/100</span>
                     </div>
                   </div>
                 </div>
                 
                 {/* Total Value */}
-                <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 p-4">
+                <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 p-5">
                   <div className="text-center">
-                    <div className="mb-1 text-sm text-foreground/60">Total Annual Value</div>
-                    <div className="font-mono text-3xl font-bold text-green-400">
+                    <div className="mb-2 text-sm text-foreground/60">Total Annual Value</div>
+                    <div className="font-mono text-3xl font-bold text-foreground">
                       ${(results.totalAnnualValue / 1_000_000).toFixed(2)}M
                     </div>
                   </div>
@@ -561,20 +588,20 @@ export default function ChamberPage() {
                   const response = await fetch("/api/launch-python")
                   const data = await response.json()
                   if (data.success) {
-                    alert("✅ Python visualization launched! A matplotlib window should open.")
+                    alert("Visualization launched! A matplotlib window should open.")
                   } else {
                     alert(`Error: ${data.error}`)
                   }
                 } catch (error) {
-                  alert("Failed to launch Python visualization. Make sure Python is installed.")
+                  alert("Failed to launch visualization. Please ensure dependencies are installed.")
                 }
               }}
               className="rounded-lg bg-blue-600 px-8 py-4 font-mono text-lg text-white transition-all hover:bg-blue-700 hover:scale-105"
             >
-              🐍 Launch Python Visualization
+              Launch Visualization
             </button>
             <p className="text-center font-mono text-xs text-foreground/50">
-              Opens a real-time matplotlib window showing plasma shape monitoring
+              Opens a real-time window showing plasma shape monitoring
             </p>
           </div>
         </div>

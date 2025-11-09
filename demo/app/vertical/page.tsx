@@ -3,21 +3,21 @@
 import { Shader, ChromaFlow, Swirl } from "shaders/react"
 import { CustomCursor } from "@/components/custom-cursor"
 import { GrainOverlay } from "@/components/grain-overlay"
-import { PlasmaHeroSection } from "@/components/sections/plasma-hero"
-import { PlasmaShapeSection } from "@/components/sections/plasma-shape-section"
-import { PlasmaMonitoringSection } from "@/components/sections/plasma-monitoring-section"
-import { PlasmaCalculatorSection } from "@/components/sections/plasma-calculator-section"
-import { PlasmaVisualizationSection } from "@/components/sections/plasma-visualization-section"
+import { VerticalHeroSection } from "@/components/sections/vertical-hero"
+import { VerticalWhatSection } from "@/components/sections/vertical-what-section"
+import { VerticalWhySection } from "@/components/sections/vertical-why-section"
+import { VerticalCalculatorSection } from "@/components/sections/vertical-calculator-section"
+import { VerticalVisualizationSection } from "@/components/sections/vertical-visualization-section"
 import { MagneticButton } from "@/components/magnetic-button"
 import { useRef, useEffect, useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import Link from "next/link"
 
-export default function PlasmaPage() {
+export default function VerticalPage() {
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
-  const sections = [PlasmaHeroSection, PlasmaShapeSection, PlasmaMonitoringSection, PlasmaCalculatorSection, PlasmaVisualizationSection]
+  const sections = [VerticalHeroSection, VerticalWhatSection, VerticalWhySection, VerticalCalculatorSection, VerticalVisualizationSection]
 
   useEffect(() => {
     const checkShaderReady = () => {
@@ -104,7 +104,6 @@ export default function PlasmaPage() {
             opacity={0.97}
           />
         </Shader>
-        <div className="absolute inset-0 bg-black/20" />
       </div>
 
       <nav
@@ -150,7 +149,7 @@ export default function PlasmaPage() {
                 </Link>
               )
             }
-            // Map to fusion page sections: Problem=1, Solution=2, Approach=3, Insights=3
+            // Map to fusion page sections
             const sectionMap: Record<string, number> = {
               "Problem": 1,
               "Solution": 2,

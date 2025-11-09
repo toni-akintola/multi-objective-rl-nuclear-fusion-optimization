@@ -2,23 +2,23 @@
 
 import { MagneticButton } from "@/components/magnetic-button"
 
-export function PlasmaVisualizationSection() {
+export function VerticalVisualizationSection() {
   return (
     <section className="flex min-h-screen w-screen shrink-0 snap-start flex-col justify-center px-6 md:px-12 lg:px-16">
       <div className="mx-auto w-full max-w-5xl text-center">
         <h2 className="mb-8 font-sans text-4xl font-light text-foreground md:text-5xl">Live Chamber Visualization</h2>
         <p className="mb-8 text-lg text-foreground/70">
-          Watch the tokamak chamber in real-time. See particle trails, plasma boundary, and shape parameters as the RL agent controls the plasma.
+          Watch the tokamak chamber in real-time. See the vertical position (Z) being tracked and controlled as the RL agent prevents VDEs.
         </p>
         <MagneticButton
           size="lg"
           variant="primary"
           onClick={async () => {
             try {
-              const response = await fetch("/api/launch-python")
+              const response = await fetch("/api/launch-vertical")
               const data = await response.json()
               if (data.success) {
-                alert("Visualization launched! A window should open showing the live chamber simulation.")
+                alert("Rotating 3D vertical guard visualization launched! A window should open showing plasma vertical position with interactive coil controls.")
               } else {
                 alert(`Error: ${data.error}`)
               }
