@@ -211,50 +211,38 @@ export default function VerticalVisPage() {
             <h2 className="mb-8 text-center font-sans text-3xl font-light text-foreground md:text-4xl">
               Why Vertical Monitoring is Critical
             </h2>
-            <div className="space-y-4">
-              <div className="flex gap-4">
-                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
-                <div>
-                  <h3 className="mb-2 font-sans text-xl font-semibold text-foreground">
-                    Prevents VDEs (Vertical Displacement Events)
-                  </h3>
-                  <p className="text-foreground/70">
-                    When plasma moves too far up or down, it can hit the chamber walls in milliseconds. This causes instant plasma loss and severe damage costing $5M+ and 3-6 months of downtime.
-                  </p>
-                </div>
+            <div className="grid gap-6 md:grid-cols-2">
+              <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6 backdrop-blur-md">
+                <h3 className="mb-2 font-sans text-lg font-semibold text-foreground">
+                  Prevents VDEs (Vertical Displacement Events)
+                </h3>
+                <p className="text-sm text-foreground/70">
+                  When plasma moves too far up or down, it can hit the chamber walls in milliseconds. This causes instant plasma loss and severe damage costing $5M+ and 3-6 months of downtime.
+                </p>
               </div>
-              <div className="flex gap-4">
-                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
-                <div>
-                  <h3 className="mb-2 font-sans text-xl font-semibold text-foreground">
-                    Enables Real-Time Correction
-                  </h3>
-                  <p className="text-foreground/70">
-                    The RL agent learns to detect early signs of vertical instability and automatically adjusts the vertical field coils to bring the plasma back to center before a VDE occurs.
-                  </p>
-                </div>
+              <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6 backdrop-blur-md">
+                <h3 className="mb-2 font-sans text-lg font-semibold text-foreground">
+                  Enables Real-Time Correction
+                </h3>
+                <p className="text-sm text-foreground/70">
+                  The RL agent learns to detect early signs of vertical instability and automatically adjusts the vertical field coils to bring the plasma back to center before a VDE occurs.
+                </p>
               </div>
-              <div className="flex gap-4">
-                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
-                <div>
-                  <h3 className="mb-2 font-sans text-xl font-semibold text-foreground">
-                    Massive Cost Savings
-                  </h3>
-                  <p className="text-foreground/70">
-                    With vertical guard enabled, VDE rates drop by 95%, episodes run 3x longer, and tokamaks save $50M+ annually in avoided repairs and downtime.
-                  </p>
-                </div>
+              <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6 backdrop-blur-md">
+                <h3 className="mb-2 font-sans text-lg font-semibold text-foreground">
+                  Massive Cost Savings
+                </h3>
+                <p className="text-sm text-foreground/70">
+                  With vertical guard enabled, VDE rates drop by 95%, episodes run 3x longer, and tokamaks save $50M+ annually in avoided repairs and downtime.
+                </p>
               </div>
-              <div className="flex gap-4">
-                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
-                <div>
-                  <h3 className="mb-2 font-sans text-xl font-semibold text-foreground">
-                    Training Efficiency
-                  </h3>
-                  <p className="text-foreground/70">
-                    Episodes run 3-4x longer with vertical guard, providing significantly more learning data per episode and faster convergence to safe policies.
-                  </p>
-                </div>
+              <div className="rounded-lg border border-foreground/10 bg-foreground/5 p-6 backdrop-blur-md">
+                <h3 className="mb-2 font-sans text-lg font-semibold text-foreground">
+                  Training Efficiency
+                </h3>
+                <p className="text-sm text-foreground/70">
+                  Episodes run 3-4x longer with vertical guard, providing significantly more learning data per episode and faster convergence to safe policies.
+                </p>
               </div>
             </div>
           </div>
