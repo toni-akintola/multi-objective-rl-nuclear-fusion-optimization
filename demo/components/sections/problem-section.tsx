@@ -8,7 +8,7 @@ export function ProblemSection() {
   return (
     <section
       ref={ref}
-      className="flex min-h-screen w-screen shrink-0 snap-start flex-col justify-center px-6 md:px-12 lg:px-16"
+      className="flex min-h-screen w-screen shrink-0 snap-start flex-col px-6 pt-24 pb-24 md:px-12 md:pt-32 md:pb-32 lg:px-16 lg:pt-36 lg:pb-36"
     >
       <div className="mx-auto w-full max-w-5xl">
         <div

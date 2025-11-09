@@ -134,8 +134,8 @@ export function FusionHeroSection() {
   const router = useRouter()
 
   return (
-    <section className="flex min-h-screen w-screen shrink-0 flex-col justify-end px-6 pb-16 pt-24 md:px-12 md:pb-24">
-      <div className="max-w-3xl">
+    <section className="flex min-h-screen w-screen shrink-0 flex-col items-center justify-start px-6 pt-24 pb-24 md:px-12 md:pt-32 md:pb-32 lg:pt-36 lg:pb-36">
+      <div className="max-w-3xl w-full text-center">
         <h1 className="mb-6 animate-in fade-in slide-in-from-bottom-8 font-sans text-6xl font-light leading-[1.1] tracking-tight text-foreground duration-1000 md:text-7xl lg:text-8xl">
           <span className="text-balance">
             Controlling
@@ -143,12 +143,12 @@ export function FusionHeroSection() {
             limitless energy
           </span>
         </h1>
-        <p className="mb-8 max-w-xl animate-in fade-in slide-in-from-bottom-4 text-lg leading-relaxed text-foreground/80 duration-1000 delay-200 md:text-xl">
+        <p className="mb-8 mx-auto max-w-xl animate-in fade-in slide-in-from-bottom-4 text-lg leading-relaxed text-foreground/80 duration-1000 delay-200 md:text-xl">
           <span className="text-pretty">
             Harnessing reinforcement learning to master plasma dynamics and unlock the potential of fusion energy.
           </span>
         </p>
-        <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center">
+        <div className="flex animate-in fade-in slide-in-from-bottom-4 flex-col gap-4 duration-1000 delay-300 sm:flex-row sm:items-center sm:justify-center">
           <MagneticButton size="lg" variant="primary" onClick={() => router.push("/visualizations/sac")}>
             Visualizations
             

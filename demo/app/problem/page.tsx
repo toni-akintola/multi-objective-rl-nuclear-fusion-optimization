@@ -3,11 +3,11 @@
 import { Shader, ChromaFlow, Swirl } from "shaders/react"
 import { CustomCursor } from "@/components/custom-cursor"
 import { GrainOverlay } from "@/components/grain-overlay"
-import { PlasmaSection } from "@/components/sections/plasma-section"
+import { ProblemSection } from "@/components/sections/problem-section"
 import { Navigation } from "@/components/navigation"
 import { useRef, useEffect, useState } from "react"
 
-export default function PlasmaPage() {
+export default function ProblemPage() {
   const [isLoaded, setIsLoaded] = useState(false)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
 
@@ -87,8 +87,9 @@ export default function PlasmaPage() {
       />
 
       <div className="relative z-10 h-screen overflow-y-auto">
-        <PlasmaSection />
+        <ProblemSection />
       </div>
     </main>
   )
 }
+

@@ -4,21 +4,19 @@ import Link from "next/link"
 
 interface NavigationProps {
   isLoaded: boolean
-  currentSection?: number
-  onSectionClick?: (index: number) => void
   variant?: "home" | "fusion"
 }
 
-export function Navigation({ isLoaded, currentSection = 0, onSectionClick, variant = "home" }: NavigationProps) {
+export function Navigation({ isLoaded, variant = "home" }: NavigationProps) {
   const logoConfig = variant === "fusion" 
     ? { symbol: "ϕ", title: "Fusion Lab" }
     : { symbol: "ϕ", title: "Fusion Lab" }
 
   const navItems = [
-    { label: "Problem", type: "section", index: 1 },
-    { label: "Solution", type: "section", index: 2 },
-    { label: "Approach", type: "section", index: 3 },
-    { label: "Plasma", type: "section", index: 4 },
+    { label: "Problem", type: "link", href: "/problem" },
+    { label: "Solution", type: "link", href: "/solution" },
+    { label: "Approach", type: "link", href: "/approach" },
+    { label: "Plasma", type: "link", href: "/plasma" },
   ]
 
   return (
@@ -27,15 +25,15 @@ export function Navigation({ isLoaded, currentSection = 0, onSectionClick, varia
         isLoaded ? "opacity-100" : "opacity-0"
       }`}
     >
-      <button
-        onClick={() => onSectionClick?.(0)}
+      <Link
+        href="/"
         className="flex items-center gap-2 transition-transform hover:scale-105"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/15 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-foreground/25">
           <span className="font-sans text-xl font-bold text-foreground">{logoConfig.symbol}</span>
         </div>
         <span className="font-sans text-xl font-semibold tracking-tight text-foreground">{logoConfig.title}</span>
-      </button>
+      </Link>
 
       <div className="hidden items-center gap-8 md:flex">
         {navItems.map((item) => {
@@ -52,22 +50,7 @@ export function Navigation({ isLoaded, currentSection = 0, onSectionClick, varia
             )
           }
 
-          return (
-            <button
-              key={item.label}
-              onClick={() => onSectionClick?.(item.index ?? 0)}
-              className={`group relative font-sans text-sm font-medium transition-colors ${
-                currentSection === item.index ? "text-foreground" : "text-foreground/80 hover:text-foreground"
-              }`}
-            >
-              {item.label}
-              <span
-                className={`absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 ${
-                  currentSection === item.index ? "w-full" : "w-0 group-hover:w-full"
-                }`}
-              />
-            </button>
-          )
+          return null
         })}
       </div>
 

@@ -82,12 +82,74 @@ function FusionPageContent() {
   }, [])
 
   const scrollToSection = useCallback((index: number) => {
-    if (scrollContainerRef.current) {
-      const sectionHeight = scrollContainerRef.current.offsetHeight
-      scrollContainerRef.current.scrollTo({
-        top: sectionHeight * index,
-        behavior: "smooth",
-      })
+    if (scrollContainerRef.current && index !== currentSection) {
+      const container = scrollContainerRef.current
+      const sectionHeight = container.offsetHeight
+      const targetTop = sectionHeight * index
+      
+      // Add fade-out effect to current section
+      const currentSectionElement = container.children[currentSection] as HTMLElement
+      if (currentSectionElement) {
+        currentSectionElement.style.transition = "opacity 0.3s ease-out, transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)"
+        currentSectionElement.style.opacity = "0.3"
+        currentSectionElement.style.transform = `scale(0.95) translateY(${index > currentSection ? '-20px' : '20px'})`
+      }
+      
+      // Smooth scroll with custom easing
+      const startTop = container.scrollTop
+      const distance = targetTop - startTop
+      const duration = 800 // milliseconds
+      const startTime = performance.now()
+      
+      const easeInOutCubic = (t: number): number => {
+        return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
+      }
+      
+      const animateScroll = (currentTime: number) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1)
+        const eased = easeInOutCubic(progress)
+        
+        container.scrollTop = startTop + distance * eased
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateScroll)
+        } else {
+          // Fade in new section
+          const newSectionElement = container.children[index] as HTMLElement
+          if (newSectionElement) {
+            newSectionElement.style.transition = "opacity 0.5s ease-in, transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)"
+            newSectionElement.style.opacity = "0"
+            newSectionElement.style.transform = `scale(1.05) translateY(${index > currentSection ? '30px' : '-30px'})`
+            
+            // Trigger reflow
+            newSectionElement.offsetHeight
+            
+            requestAnimationFrame(() => {
+              newSectionElement.style.opacity = "1"
+              newSectionElement.style.transform = "scale(1) translateY(0)"
+              
+              // Reset after animation
+              setTimeout(() => {
+                newSectionElement.style.transition = ""
+                newSectionElement.style.transform = ""
+                newSectionElement.style.opacity = ""
+              }, 600)
+            })
+          }
+          
+          // Reset current section after animation
+          if (currentSectionElement) {
+            setTimeout(() => {
+              currentSectionElement.style.transition = ""
+              currentSectionElement.style.transform = ""
+              currentSectionElement.style.opacity = ""
+            }, 500)
+          }
+        }
+      }
+      
+      requestAnimationFrame(animateScroll)
       setCurrentSection(index)
       
       // Update URL with section parameter
@@ -95,94 +157,65 @@ function FusionPageContent() {
       url.searchParams.set('section', index.toString())
       window.history.pushState({}, '', url)
     }
-  }, [])
+  }, [currentSection])
 
+  // Disable wheel scrolling
   useEffect(() => {
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartY.current = e.touches[0].clientY
-      touchStartX.current = e.touches[0].clientX
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault()
     }
 
-    const handleTouchMove = (e: TouchEvent) => {
-      if (Math.abs(e.touches[0].clientY - touchStartY.current) > 10) {
-        e.preventDefault()
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener("wheel", handleWheel, { passive: false })
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("wheel", handleWheel)
       }
     }
+  }, [])
 
-    const handleTouchEnd = (e: TouchEvent) => {
-      const touchEndY = e.changedTouches[0].clientY
-      const touchEndX = e.changedTouches[0].clientX
-      const deltaY = touchStartY.current - touchEndY
-      const deltaX = touchStartX.current - touchEndX
+  // Disable touch scrolling
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault()
+    }
 
-      if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
-        if (deltaY > 0 && currentSection < sections.length - 1) {
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener("touchmove", handleTouchMove, { passive: false })
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("touchmove", handleTouchMove)
+      }
+    }
+  }, [])
+
+  // Arrow key navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault()
+        
+        if (e.key === "ArrowDown" && currentSection < sections.length - 1) {
           scrollToSection(currentSection + 1)
-        } else if (deltaY < 0 && currentSection > 0) {
+        } else if (e.key === "ArrowUp" && currentSection > 0) {
           scrollToSection(currentSection - 1)
         }
       }
     }
 
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener("touchstart", handleTouchStart, { passive: true })
-      container.addEventListener("touchmove", handleTouchMove, { passive: false })
-      container.addEventListener("touchend", handleTouchEnd, { passive: true })
-    }
+    window.addEventListener("keydown", handleKeyDown)
 
     return () => {
-      if (container) {
-        container.removeEventListener("touchstart", handleTouchStart)
-        container.removeEventListener("touchmove", handleTouchMove)
-        container.removeEventListener("touchend", handleTouchEnd)
-      }
+      window.removeEventListener("keydown", handleKeyDown)
     }
   }, [currentSection, sections.length, scrollToSection])
 
-  // Wheel scrolling disabled - using vertical scroll snap instead
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (scrollThrottleRef.current) return
-
-      scrollThrottleRef.current = requestAnimationFrame(() => {
-        if (!scrollContainerRef.current) {
-          scrollThrottleRef.current = undefined
-          return
-        }
-
-        const sectionHeight = scrollContainerRef.current.offsetHeight
-        const scrollTop = scrollContainerRef.current.scrollTop
-        const newSection = Math.round(scrollTop / sectionHeight)
-
-        if (newSection !== currentSection && newSection >= 0 && newSection < sections.length) {
-          setCurrentSection(newSection)
-          
-          // Update URL with section parameter
-          const url = new URL(window.location.href)
-          url.searchParams.set('section', newSection.toString())
-          window.history.pushState({}, '', url)
-        }
-
-        scrollThrottleRef.current = undefined
-      })
-    }
-
-    const container = scrollContainerRef.current
-    if (container) {
-      container.addEventListener("scroll", handleScroll, { passive: true })
-    }
-
-    return () => {
-      if (container) {
-        container.removeEventListener("scroll", handleScroll)
-      }
-      if (scrollThrottleRef.current) {
-        cancelAnimationFrame(scrollThrottleRef.current)
-      }
-    }
-  }, [currentSection, sections.length, scrollToSection])
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-background">
@@ -240,7 +273,6 @@ function FusionPageContent() {
         style={{ 
           scrollbarWidth: "none", 
           msOverflowStyle: "none",
-          scrollSnapType: "y mandatory",
           scrollBehavior: "smooth"
         }}
       >

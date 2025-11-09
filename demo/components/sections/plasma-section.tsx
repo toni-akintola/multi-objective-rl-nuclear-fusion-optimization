@@ -91,32 +91,32 @@ export function PlasmaSection() {
   }
 
   return (
-    <section className="flex min-h-screen w-screen shrink-0 snap-start flex-col justify-center px-6 py-16 md:px-12 lg:px-16">
-      <div className="mx-auto w-full max-w-4xl">
+    <section className="flex min-h-screen w-screen shrink-0 snap-start flex-col px-4 pt-24 pb-24 sm:px-6 sm:pt-32 sm:pb-32 md:px-8 md:pt-32 md:pb-32 lg:px-12 lg:pt-36 lg:pb-36 xl:px-16">
+      <div className="mx-auto w-full max-w-7xl">
         {/* Header */}
         <div
           ref={revealRef as React.RefObject<HTMLDivElement>}
-          className={`mb-12 text-center transition-all duration-700 ${
+          className={`mb-8 text-center transition-all duration-700 sm:mb-10 md:mb-12 lg:mb-16 ${
             isVisible ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"
           }`}
         >
-          <div className="mb-4 inline-block rounded-full border border-foreground/20 bg-foreground/15 px-4 py-1.5 backdrop-blur-md">
-            <p className="font-mono text-xs text-foreground/90">Safety Monitoring Systems</p>
+          <div className="mb-3 inline-block rounded-full border border-foreground/20 bg-foreground/15 px-3 py-1 backdrop-blur-md sm:mb-4 sm:px-4 sm:py-1.5">
+            <p className="font-mono text-xs text-foreground/90 sm:text-sm">Safety Monitoring Systems</p>
           </div>
-          <h1 className="mb-4 font-sans text-5xl font-light leading-tight text-foreground md:text-6xl">
+          <h1 className="mb-3 font-sans text-4xl font-light leading-tight text-foreground sm:text-5xl sm:mb-4 md:text-6xl lg:text-7xl">
             Plasma Shape Monitoring
           </h1>
-          <p className="max-w-2xl mx-auto text-lg leading-relaxed text-foreground/70 md:text-xl">
+          <p className="max-w-2xl mx-auto text-base leading-relaxed text-foreground/70 sm:text-lg md:text-xl lg:text-xl">
             Continuous monitoring of critical plasma parameters to prevent disruptions and ensure safe operation
           </p>
         </div>
 
-        {/* 2 Column Layout */}
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:gap-12">
+        {/* Responsive Column Layout */}
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 md:grid-cols-2 md:gap-8 lg:grid-cols-3 lg:gap-10 xl:gap-12">
           {/* Left Column */}
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-5 md:space-y-4 lg:space-y-5">
             {/* What is Shape Section */}
-            <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+            <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md sm:p-5 md:p-4 lg:p-5">
               <h2 className="mb-2 font-sans text-lg font-semibold text-foreground">What is Plasma Shape?</h2>
               <p className="mb-3 text-xs text-foreground/80 leading-relaxed">
                 Plasma shape refers to the three-dimensional geometry and stability parameters of the confined plasma. 
@@ -198,13 +198,13 @@ export function PlasmaSection() {
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-4">
+          {/* Middle Column */}
+          <div className="space-y-4 sm:space-y-5 md:space-y-4 lg:space-y-5">
             {/* Cost Importance Calculator */}
-            <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+            <div className="rounded-xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md sm:p-5 md:p-4 lg:p-5">
               <h2 className="mb-3 font-sans text-lg font-semibold text-foreground">Cost Importance Calculator</h2>
               
-              <div className="mb-4 grid gap-3 md:grid-cols-2">
+              <div className="mb-4 space-y-3">
                 {/* Real Tokamak Parameters */}
                 <div className="space-y-3 rounded-lg border border-foreground/10 bg-foreground/5 p-4">
                   <h3 className="font-sans text-sm font-semibold text-foreground">Real Tokamak Parameters</h3>
@@ -338,96 +338,13 @@ export function PlasmaSection() {
                   Calculate Cost Importance
                 </button>
               </div>
-              
-              {/* Results */}
-              {results && (
-                <div className="space-y-4 rounded-lg border border-foreground/10 bg-gradient-to-br from-green-500/10 to-blue-500/10 p-4">
-                  <h3 className="font-sans text-base font-semibold text-foreground">Results</h3>
-                  
-                  {/* Real Tokamak Savings */}
-                  <div className="rounded-lg bg-foreground/5 p-3">
-                    <h4 className="mb-2 font-sans text-sm font-semibold text-foreground">Real Tokamak Savings</h4>
-                    <div className="grid gap-2 text-xs">
-                      <div>
-                        <span className="text-foreground/60">Disruptions prevented:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.disruptionsPrevented.toFixed(1)}</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Prevention rate:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.preventionRate.toFixed(1)}%</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Annual savings:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">${(results.tokamak.annualSavings / 1_000_000).toFixed(1)}M</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">ROI:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.roi.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Training Savings */}
-                  <div className="rounded-lg bg-foreground/5 p-3">
-                    <h4 className="mb-2 font-sans text-sm font-semibold text-foreground">Training Cost Savings</h4>
-                    <div className="grid gap-2 text-xs">
-                      <div>
-                        <span className="text-foreground/60">Episode length improvement:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">+{results.training.episodeLengthImprovement.toFixed(1)}%</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Convergence speedup:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.training.convergenceSpeedup.toFixed(1)}x</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Time savings:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.training.timeSavings.toFixed(1)} hours</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Training cost savings:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">${results.training.trainingCostSavings.toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Importance Scores */}
-                  <div className="rounded-lg bg-foreground/5 p-3">
-                    <h4 className="mb-2 font-sans text-sm font-semibold text-foreground">Importance Scores</h4>
-                    <div className="grid gap-2 text-xs">
-                      <div>
-                        <span className="text-foreground/60">Overall importance:</span>
-                        <span className="ml-2 font-mono text-base font-bold text-foreground">{results.importance.overallImportance.toFixed(1)}/100</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Tokamak importance:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.tokamakImportance.toFixed(1)}/100</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Training importance:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.trainingImportance.toFixed(1)}/100</span>
-                      </div>
-                      <div>
-                        <span className="text-foreground/60">Safety importance:</span>
-                        <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.safetyImportance.toFixed(1)}/100</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Total Value */}
-                  <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 p-3">
-                    <div className="text-center">
-                      <div className="mb-1 text-xs text-foreground/60">Total Annual Value</div>
-                      <div className="font-mono text-2xl font-bold text-foreground">
-                        ${(results.totalAnnualValue / 1_000_000).toFixed(2)}M
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
+          </div>
 
+          {/* Right Column */}
+          <div className="space-y-4 sm:space-y-5 md:space-y-4 lg:space-y-5">
             {/* Live Visualization */}
-            <div className="flex flex-col items-center gap-4 rounded-xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md sm:p-5 md:p-4 lg:p-5">
               <h2 className="font-sans text-lg font-semibold text-foreground">Live Visualization</h2>
               <p className="text-center text-xs text-foreground/70">
                 Watch the shape guard system in action. See how plasma parameters are monitored in real-time 
@@ -455,6 +372,92 @@ export function PlasmaSection() {
                 Opens a real-time window showing plasma shape monitoring
               </p>
             </div>
+
+            {/* Results */}
+            {results && (
+              <div className="space-y-4 rounded-lg border border-foreground/10 bg-gradient-to-br from-green-500/10 to-blue-500/10 p-4 sm:p-5 md:p-4 lg:p-5">
+                <h3 className="font-sans text-base font-semibold text-foreground">Results</h3>
+                
+                {/* Real Tokamak Savings */}
+                <div className="rounded-lg bg-foreground/5 p-3">
+                  <h4 className="mb-2 font-sans text-sm font-semibold text-foreground">Real Tokamak Savings</h4>
+                  <div className="grid gap-2 text-xs">
+                    <div>
+                      <span className="text-foreground/60">Disruptions prevented:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.disruptionsPrevented.toFixed(1)}</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Prevention rate:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.preventionRate.toFixed(1)}%</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Annual savings:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">${(results.tokamak.annualSavings / 1_000_000).toFixed(1)}M</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">ROI:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.tokamak.roi.toFixed(1)}%</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Training Savings */}
+                <div className="rounded-lg bg-foreground/5 p-3">
+                  <h4 className="mb-2 font-sans text-sm font-semibold text-foreground">Training Cost Savings</h4>
+                  <div className="grid gap-2 text-xs">
+                    <div>
+                      <span className="text-foreground/60">Episode length improvement:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">+{results.training.episodeLengthImprovement.toFixed(1)}%</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Convergence speedup:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.training.convergenceSpeedup.toFixed(1)}x</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Time savings:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.training.timeSavings.toFixed(1)} hours</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Training cost savings:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">${results.training.trainingCostSavings.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Importance Scores */}
+                <div className="rounded-lg bg-foreground/5 p-3">
+                  <h4 className="mb-2 font-sans text-sm font-semibold text-foreground">Importance Scores</h4>
+                  <div className="grid gap-2 text-xs">
+                    <div>
+                      <span className="text-foreground/60">Overall importance:</span>
+                      <span className="ml-2 font-mono text-base font-bold text-foreground">{results.importance.overallImportance.toFixed(1)}/100</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Tokamak importance:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.tokamakImportance.toFixed(1)}/100</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Training importance:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.trainingImportance.toFixed(1)}/100</span>
+                    </div>
+                    <div>
+                      <span className="text-foreground/60">Safety importance:</span>
+                      <span className="ml-2 font-mono font-semibold text-foreground">{results.importance.safetyImportance.toFixed(1)}/100</span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Total Value */}
+                <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 p-3">
+                  <div className="text-center">
+                    <div className="mb-1 text-xs text-foreground/60">Total Annual Value</div>
+                    <div className="font-mono text-2xl font-bold text-foreground">
+                      ${(results.totalAnnualValue / 1_000_000).toFixed(2)}M
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
