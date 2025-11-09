@@ -27,5 +27,18 @@ def benchmark_single_env():
 
 
 if __name__ == "__main__":
-    benchmark_parallel_envs()
+    import gymnasium as gym
+
+    # Interactive visualization
+    env = gym.make('gymtorax/IterHybrid-v0', render_mode="human")
+    obs, info = env.reset()
+
+    terminated = False
+    while not terminated:
+        action = env.action_space.sample()
+        obs, reward, terminated, truncated, info = env.step(action)
+        env.render()  # Live matplotlib display
+
+        if terminated or truncated:
+            break
 
