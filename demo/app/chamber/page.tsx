@@ -219,11 +219,18 @@ export default function ChamberPage() {
                 </Link>
               )
             }
-            // Link back to fusion page
+            // Map to fusion page sections
+            const sectionMap: Record<string, number> = {
+              "Problem": 1,
+              "Solution": 2,
+              "Approach": 3,
+              "Insights": 3
+            }
+            const sectionIndex = sectionMap[item] ?? 0
             return (
               <Link
                 key={item}
-                href="/fusion"
+                href={`/fusion?section=${sectionIndex}`}
                 className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
               >
                 {item}
