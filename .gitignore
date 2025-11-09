@@ -17,3 +17,5 @@ results/*.png
 logs/*.zip
 
 sim_data
+
+*.pkl
