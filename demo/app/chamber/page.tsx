@@ -294,7 +294,7 @@ export default function ChamberPage() {
             
             <div className="mb-6 space-y-4">
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-500/20 text-red-400">!</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Prevents Disruptions</div>
                   <p className="text-sm text-foreground/70">
@@ -304,7 +304,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-green-500/20 text-green-400">✓</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Enables Self-Correction</div>
                   <p className="text-sm text-foreground/70">
@@ -314,7 +314,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-500/20 text-blue-400">⚡</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Massive Cost Savings</div>
                   <p className="text-sm text-foreground/70">
@@ -324,7 +324,7 @@ export default function ChamberPage() {
               </div>
               
               <div className="flex gap-4">
-                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple-500/20 text-purple-400">🚀</div>
+                <div className="flex h-2 w-2 shrink-0 items-center justify-center rounded-full bg-foreground/60 mt-2"></div>
                 <div>
                   <div className="mb-1 font-sans font-semibold text-foreground">Training Efficiency</div>
                   <p className="text-sm text-foreground/70">
