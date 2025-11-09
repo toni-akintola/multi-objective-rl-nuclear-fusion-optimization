@@ -17,11 +17,11 @@ class FlattenObsWrapper(gym.ObservationWrapper):
     Flattens ANY observation space (nested Dict/Tuple/etc.) into a single Box,
     so Stable-Baselines3 won't complain about nested spaces.
     """
+
     def __init__(self, env):
         super().__init__(env)
         self._orig_obs_space = env.observation_space
         self.observation_space = flatten_space(self._orig_obs_space)
-        
 
     def observation(self, obs):
         flattened = flatten(self._orig_obs_space, obs)
@@ -36,6 +36,7 @@ class FlattenActionWrapper(gym.ActionWrapper):
     If the env has a Dict (or Tuple) action space, expose it as a flat Box for SB3.
     We unflatten before sending to the underlying env.
     """
+
     def __init__(self, env):
         super().__init__(env)
         self._orig_action_space = env.action_space
@@ -46,7 +47,9 @@ class FlattenActionWrapper(gym.ActionWrapper):
             self.action_space = self._orig_action_space
             self._needs_unflatten = False
         else:
-            raise TypeError(f"Unsupported action space type: {type(self._orig_action_space)}")
+            raise TypeError(
+                f"Unsupported action space type: {type(self._orig_action_space)}"
+            )
 
     def action(self, action: np.ndarray):
         if self._needs_unflatten:
@@ -59,6 +62,7 @@ class NormalizeObservation(gym.ObservationWrapper):
     Normalize observations using running statistics.
     This helps prevent extreme values that can cause NaN gradients.
     """
+
     def __init__(self, env, epsilon=1e-8):
         super().__init__(env)
         self.epsilon = epsilon
@@ -92,7 +96,9 @@ def make_env(normalize=True):
     env = gym.make("gymtorax/IterHybrid-v0")
 
     # Flatten observations first (SB3 barfs on nested Dict/Tuple)
-    if isinstance(env.observation_space, (SpaceDict, SpaceTuple)) or not isinstance(env.observation_space, Box):
+    if isinstance(env.observation_space, (SpaceDict, SpaceTuple)) or not isinstance(
+        env.observation_space, Box
+    ):
         env = FlattenObsWrapper(env)
 
     # Add normalization to help with training stability
@@ -100,7 +106,9 @@ def make_env(normalize=True):
         env = NormalizeObservation(env)
 
     # Flatten actions if needed (SB3 SAC needs a single Box)
-    if isinstance(env.action_space, (SpaceDict, SpaceTuple)) or not isinstance(env.action_space, Box):
+    if isinstance(env.action_space, (SpaceDict, SpaceTuple)) or not isinstance(
+        env.action_space, Box
+    ):
         env = FlattenActionWrapper(env)
 
     # After wrapping, SB3 will see Box obs & Box action
@@ -111,10 +119,10 @@ def make_env(normalize=True):
 
 def main():
     env = make_env()
-    
+
     print(f"Observation space: {env.observation_space}")
     print(f"Action space: {env.action_space}")
-    
+
     # Test the environment first
     print("\nTesting environment...")
     obs, info = env.reset()
@@ -122,7 +130,7 @@ def main():
     print(f"Initial observation: {obs}")
     print(f"Observation contains NaN: {np.any(np.isnan(obs))}")
     print(f"Observation contains Inf: {np.any(np.isinf(obs))}")
-    
+
     # Take a random action
     action = env.action_space.sample()
     obs, reward, terminated, truncated, info = env.step(action)
@@ -131,8 +139,8 @@ def main():
 
     # Configure SAC with more conservative hyperparameters
     model = SAC(
-        "MlpPolicy", 
-        env, 
+        "MlpPolicy",
+        env,
         verbose=1,
         learning_rate=3e-3,  # Lower learning rate
         buffer_size=100_000,  # Reduced buffer size to fit in memory
@@ -142,35 +150,30 @@ def main():
         gamma=0.99,
         train_freq=1,
         gradient_steps=1,
-        ent_coef='auto',  # Automatic entropy tuning
+        ent_coef="auto",  # Automatic entropy tuning
         target_update_interval=1,
         policy_kwargs=dict(
-            net_arch=[512, 512],  # Smaller network
-            activation_fn=nn.Tanh
-        )
+            net_arch=[512, 512], activation_fn=nn.Tanh  # Smaller network
+        ),
     )
-    
+
     # Add callbacks for monitoring
     checkpoint_callback = CheckpointCallback(
-        save_freq=1000,
-        save_path='./logs/',
-        name_prefix='sac_torax'
+        save_freq=1000, save_path="./logs/", name_prefix="sac_torax"
     )
-    
+
     print("\nStarting training...")
     try:
-        model.learn(
-            total_timesteps=10000, 
-            log_interval=4,
-            callback=checkpoint_callback
-        )
+        model.learn(total_timesteps=10000, log_interval=4, callback=checkpoint_callback)
         model.save("sac_torax_flat")
         print("Training completed successfully!")
     except Exception as e:
         print(f"Training failed with error: {e}")
         import traceback
+
         traceback.print_exc()
         return
+
 
 if __name__ == "__main__":
     main()

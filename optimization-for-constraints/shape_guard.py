@@ -2,24 +2,24 @@ import numpy as np
 from gymtorax import rewards as torax_reward  # your rewards.py snippet
 
 # "safe operating box" ---
-BETA_N_MAX   = 3.0
-BETA_N_MIN   = 0.5   # too low = useless for power
+BETA_N_MAX = 3.0
+BETA_N_MIN = 0.5  # too low = useless for power
 
-QMIN_MIN     = 1.0   # want q_min >= 1
-Q95_MIN      = 3.0
-Q95_MAX      = 5.0
+QMIN_MIN = 1.0  # want q_min >= 1
+Q95_MIN = 3.0
+Q95_MAX = 5.0
 
 # --- how much the "shape" is allowed to change per control step ---
 MAX_DELTA_BETA_N = 0.2
-MAX_DELTA_QMIN   = 0.15
-MAX_DELTA_Q95    = 0.4
+MAX_DELTA_QMIN = 0.15
+MAX_DELTA_Q95 = 0.4
 
 
 def extract_shape_vector(state: dict) -> np.ndarray:
     """Cheap 'shape proxy' vector from TORAX / gymtorax state."""
     beta_N = torax_reward.get_beta_N(state)
-    q_min  = torax_reward.get_q_min(state)
-    q95    = torax_reward.get_q95(state)
+    q_min = torax_reward.get_q_min(state)
+    q95 = torax_reward.get_q95(state)
     return np.array([beta_N, q_min, q95], dtype=np.float32)
 
 
@@ -39,8 +39,7 @@ def is_shape_in_safe_box(shape_vec: np.ndarray) -> bool:
     return True
 
 
-def is_shape_change_reasonable(prev_shape: np.ndarray,
-                               shape: np.ndarray) -> bool:
+def is_shape_change_reasonable(prev_shape: np.ndarray, shape: np.ndarray) -> bool:
     """Limit how violently the 'shape' can move between time steps."""
     d_beta, d_qmin, d_q95 = shape - prev_shape
 
@@ -54,8 +53,7 @@ def is_shape_change_reasonable(prev_shape: np.ndarray,
     return True
 
 
-def shape_violation(prev_state: dict | None,
-                    state: dict) -> dict:
+def shape_violation(prev_state: dict | None, state: dict) -> dict:
     """
     Returns a dict describing whether the new state is 'shape safe'.
 

@@ -20,13 +20,16 @@ import glob
 import os
 import sys
 
+
 def pick_engine():
     # Prefer h5netcdf on macOS; fall back to netcdf4
     try:
         import h5netcdf  # noqa: F401
+
         return "h5netcdf"
     except Exception:
         return "netcdf4"
+
 
 def latest_nc(pattern="/tmp/torax_results/state_history_*.nc"):
     files = glob.glob(pattern)
@@ -34,15 +37,19 @@ def latest_nc(pattern="/tmp/torax_results/state_history_*.nc"):
         raise FileNotFoundError(f"No .nc files found with pattern: {pattern}")
     return max(files, key=os.path.getmtime)
 
+
 def list_groups(path):
     from netCDF4 import Dataset
+
     root = Dataset(path, "r")
     groups = list(root.groups.keys())
     root.close()
     return groups
 
+
 def open_group_with_data(path, preferred_group="profiles"):
     import xarray as xr
+
     engine = pick_engine()
 
     # Try preferred group first
@@ -56,6 +63,7 @@ def open_group_with_data(path, preferred_group="profiles"):
     # Otherwise scan for the first non-empty group
     try:
         from netCDF4 import Dataset
+
         root = Dataset(path, "r")
         for g in root.groups.keys():
             try:
@@ -69,7 +77,10 @@ def open_group_with_data(path, preferred_group="profiles"):
     except Exception as e:
         raise RuntimeError(f"Could not inspect groups: {e}")
 
-    raise RuntimeError("No non-empty groups with data variables were found in this file.")
+    raise RuntimeError(
+        "No non-empty groups with data variables were found in this file."
+    )
+
 
 def to_csv(ds, out_csv, only_vars=None):
     if only_vars:
@@ -81,13 +92,33 @@ def to_csv(ds, out_csv, only_vars=None):
     df.to_csv(out_csv, index=False)
     print(f"Wrote {out_csv}  (rows={len(df):,}, cols={len(df.columns)})")
 
+
 def main():
-    ap = argparse.ArgumentParser(description="Convert TORAX .nc outputs to CSV (profiles + optional scalars).")
+    ap = argparse.ArgumentParser(
+        description="Convert TORAX .nc outputs to CSV (profiles + optional scalars)."
+    )
     ap.add_argument("path", nargs="?", help="Path to a .nc file. Omit with --latest.")
-    ap.add_argument("--latest", action="store_true", help="Use the latest /tmp/torax_results/state_history_*.nc")
-    ap.add_argument("-o", "--out", default="torax_profiles.csv", help="Output CSV for profiles (default: torax_profiles.csv)")
-    ap.add_argument("--vars", nargs="*", help="Subset of variables to export (e.g., temperature density current)")
-    ap.add_argument("--write-scalars", action="store_true", help="Also export scalars group to torax_scalars.csv")
+    ap.add_argument(
+        "--latest",
+        action="store_true",
+        help="Use the latest /tmp/torax_results/state_history_*.nc",
+    )
+    ap.add_argument(
+        "-o",
+        "--out",
+        default="torax_profiles.csv",
+        help="Output CSV for profiles (default: torax_profiles.csv)",
+    )
+    ap.add_argument(
+        "--vars",
+        nargs="*",
+        help="Subset of variables to export (e.g., temperature density current)",
+    )
+    ap.add_argument(
+        "--write-scalars",
+        action="store_true",
+        help="Also export scalars group to torax_scalars.csv",
+    )
     ap.add_argument("--list-groups", action="store_true", help="List groups and exit")
     args = ap.parse_args()
 
@@ -113,6 +144,6 @@ def main():
         print(f"Selecting variables: {args.vars}")
     to_csv(ds, args.out, only_vars=args.vars)
 
+
 if __name__ == "__main__":
     main()
-
