@@ -425,37 +425,37 @@ export function PlasmaSection() {
                 </div>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Visualization Button */}
-        <div className="flex flex-col items-center gap-6 rounded-2xl border border-foreground/10 bg-foreground/5 p-8 backdrop-blur-md">
-          <h2 className="font-sans text-2xl font-semibold text-foreground">Live Visualization</h2>
-          <p className="max-w-xl text-center text-foreground/70">
-            Watch the shape guard system in action. See how plasma parameters are monitored in real-time 
-            and how the system self-corrects when violations occur.
-          </p>
-          <button
-            onClick={async () => {
-              try {
-                const response = await fetch("/api/launch-python")
-                const data = await response.json()
-                if (data.success) {
-                  alert("Visualization launched! A matplotlib window should open.")
-                } else {
-                  alert(`Error: ${data.error}`)
-                }
-              } catch (error) {
-                alert("Failed to launch visualization. Please ensure dependencies are installed.")
-              }
-            }}
-            className="rounded-lg bg-blue-600 px-8 py-4 font-mono text-lg text-white transition-all hover:bg-blue-700 hover:scale-105"
-          >
-            Launch Visualization
-          </button>
-          <p className="text-center font-mono text-xs text-foreground/50">
-            Opens a real-time window showing plasma shape monitoring
-          </p>
+            {/* Live Visualization */}
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+              <h2 className="font-sans text-lg font-semibold text-foreground">Live Visualization</h2>
+              <p className="text-center text-xs text-foreground/70">
+                Watch the shape guard system in action. See how plasma parameters are monitored in real-time 
+                and how the system self-corrects when violations occur.
+              </p>
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/launch-python")
+                    const data = await response.json()
+                    if (data.success) {
+                      alert("Visualization launched! A matplotlib window should open.")
+                    } else {
+                      alert(`Error: ${data.error}`)
+                    }
+                  } catch (error) {
+                    alert("Failed to launch visualization. Please ensure dependencies are installed.")
+                  }
+                }}
+                className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-mono text-white transition-all hover:bg-blue-700 hover:scale-105"
+              >
+                Launch Visualization
+              </button>
+              <p className="text-center font-mono text-xs text-foreground/50">
+                Opens a real-time window showing plasma shape monitoring
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
