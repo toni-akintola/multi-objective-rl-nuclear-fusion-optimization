@@ -4,10 +4,23 @@ import { Shader, ChromaFlow, Swirl } from "shaders/react"
 import { CustomCursor } from "@/components/custom-cursor"
 import { GrainOverlay } from "@/components/grain-overlay"
 import { FusionHeroSection } from "@/components/sections/fusion-hero"
-import { MagneticButton } from "@/components/magnetic-button"
-import { useRef, useEffect, useState } from "react"
+import { ProblemSection } from "@/components/sections/problem-section"
+import { SolutionSection } from "@/components/sections/solution-section"
+import { ApproachSection } from "@/components/sections/approach-section"
+import { Navigation } from "@/components/navigation"
+import { useRef, useEffect, useState, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="h-screen w-full bg-background" />}>
+      <HomeContent />
+    </Suspense>
+  )
+}
+
+function HomeContent() {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
@@ -15,6 +28,27 @@ export default function Home() {
   const touchStartX = useRef(0)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
   const scrollThrottleRef = useRef<number>()
+  const sections = [FusionHeroSection, ProblemSection, SolutionSection, ApproachSection]
+  const searchParams = useSearchParams()
+
+  // Read section from URL on mount
+  useEffect(() => {
+    const sectionParam = searchParams.get('section')
+    if (sectionParam) {
+      const sectionIndex = parseInt(sectionParam, 10)
+      if (sectionIndex >= 0 && sectionIndex < sections.length) {
+        setCurrentSection(sectionIndex)
+        // Scroll to section
+        if (scrollContainerRef.current) {
+          const sectionWidth = scrollContainerRef.current.offsetWidth
+          scrollContainerRef.current.scrollTo({
+            left: sectionWidth * sectionIndex,
+            behavior: "instant",
+          })
+        }
+      }
+    }
+  }, [searchParams, sections.length])
 
   useEffect(() => {
     const checkShaderReady = () => {
@@ -46,7 +80,7 @@ export default function Home() {
     }
   }, [])
 
-  const scrollToSection = (index: number) => {
+  const scrollToSection = useCallback((index: number) => {
     if (scrollContainerRef.current) {
       const sectionWidth = scrollContainerRef.current.offsetWidth
       scrollContainerRef.current.scrollTo({
@@ -54,8 +88,13 @@ export default function Home() {
         behavior: "smooth",
       })
       setCurrentSection(index)
+      
+      // Update URL with section parameter
+      const url = new URL(window.location.href)
+      url.searchParams.set('section', index.toString())
+      window.history.pushState({}, '', url)
     }
-  }
+  }, [])
 
   useEffect(() => {
     const handleTouchStart = (e: TouchEvent) => {
@@ -76,7 +115,7 @@ export default function Home() {
       const deltaX = touchStartX.current - touchEndX
 
       if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
-        if (deltaY > 0 && currentSection < 4) {
+        if (deltaY > 0 && currentSection < sections.length - 1) {
           scrollToSection(currentSection + 1)
         } else if (deltaY < 0 && currentSection > 0) {
           scrollToSection(currentSection - 1)
@@ -98,7 +137,7 @@ export default function Home() {
         container.removeEventListener("touchend", handleTouchEnd)
       }
     }
-  }, [currentSection])
+  }, [currentSection, sections.length, scrollToSection])
 
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
@@ -130,7 +169,7 @@ export default function Home() {
         container.removeEventListener("wheel", handleWheel)
       }
     }
-  }, [currentSection])
+  }, [currentSection, sections.length, scrollToSection])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -146,7 +185,7 @@ export default function Home() {
         const scrollLeft = scrollContainerRef.current.scrollLeft
         const newSection = Math.round(scrollLeft / sectionWidth)
 
-        if (newSection !== currentSection && newSection >= 0 && newSection <= 4) {
+        if (newSection !== currentSection && newSection >= 0 && newSection < sections.length) {
           setCurrentSection(newSection)
         }
 
@@ -167,7 +206,8 @@ export default function Home() {
         cancelAnimationFrame(scrollThrottleRef.current)
       }
     }
-  }, [currentSection])
+  }, [currentSection, sections.length, scrollToSection])
+
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-background">
@@ -209,44 +249,12 @@ export default function Home() {
         <div className="absolute inset-0 bg-black/20" />
       </div>
 
-      <nav
-        className={`fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-6 transition-opacity duration-700 md:px-12 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <button
-          onClick={() => scrollToSection(0)}
-          className="flex items-center gap-2 transition-transform hover:scale-105"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/15 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-foreground/25">
-            <span className="font-sans text-xl font-bold text-foreground">A</span>
-          </div>
-          <span className="font-sans text-xl font-semibold tracking-tight text-foreground">Acme</span>
-        </button>
-
-        <div className="hidden items-center gap-8 md:flex">
-          {["Home", "Work", "Services", "About", "Contact"].map((item, index) => (
-            <button
-              key={item}
-              onClick={() => scrollToSection(index)}
-              className={`group relative font-sans text-sm font-medium transition-colors ${
-                currentSection === index ? "text-foreground" : "text-foreground/80 hover:text-foreground"
-              }`}
-            >
-              {item}
-              <span
-                className={`absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 ${
-                  currentSection === index ? "w-full" : "w-0 group-hover:w-full"
-                }`}
-              />
-            </button>
-          ))}
-        </div>
-
-        <MagneticButton variant="secondary" onClick={() => scrollToSection(4)}>
-          Get Started
-        </MagneticButton>
-      </nav>
+      <Navigation
+        isLoaded={isLoaded}
+        currentSection={currentSection}
+        onSectionClick={scrollToSection}
+        variant="home"
+      />
 
       <div
         ref={scrollContainerRef}
@@ -256,7 +264,11 @@ export default function Home() {
         }`}
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
-        <FusionHeroSection />
+        {sections.map((Section, index) => (
+          <div key={index} className="min-h-screen w-screen shrink-0">
+            <Section />
+          </div>
+        ))}
       </div>
 
       <style jsx global>{`

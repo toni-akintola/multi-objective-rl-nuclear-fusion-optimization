@@ -7,10 +7,8 @@ import { FusionHeroSection } from "@/components/sections/fusion-hero"
 import { ProblemSection } from "@/components/sections/problem-section"
 import { SolutionSection } from "@/components/sections/solution-section"
 import { ApproachSection } from "@/components/sections/approach-section"
-import { MagneticButton } from "@/components/magnetic-button"
-import { useRef, useEffect, useState } from "react"
-import { ChevronDown, ChevronUp } from "lucide-react"
-import Link from "next/link"
+import { Navigation } from "@/components/navigation"
+import { useRef, useEffect, useState, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
 
@@ -23,9 +21,13 @@ export default function FusionPage() {
 }
 
 function FusionPageContent() {
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [currentSection, setCurrentSection] = useState(0)
   const [isLoaded, setIsLoaded] = useState(false)
+  const touchStartY = useRef(0)
+  const touchStartX = useRef(0)
   const shaderContainerRef = useRef<HTMLDivElement>(null)
+  const scrollThrottleRef = useRef<number>()
   const sections = [FusionHeroSection, ProblemSection, SolutionSection, ApproachSection]
   const searchParams = useSearchParams()
 
@@ -36,9 +38,17 @@ function FusionPageContent() {
       const sectionIndex = parseInt(sectionParam, 10)
       if (sectionIndex >= 0 && sectionIndex < sections.length) {
         setCurrentSection(sectionIndex)
+        // Scroll to section
+        if (scrollContainerRef.current) {
+          const sectionWidth = scrollContainerRef.current.offsetWidth
+          scrollContainerRef.current.scrollTo({
+            left: sectionWidth * sectionIndex,
+            behavior: "instant",
+          })
+        }
       }
     }
-  }, [searchParams])
+  }, [searchParams, sections.length])
 
   useEffect(() => {
     const checkShaderReady = () => {
@@ -70,23 +80,133 @@ function FusionPageContent() {
     }
   }, [])
 
-  const scrollToSection = (index: number) => {
-    if (index >= 0 && index < sections.length) {
+  const scrollToSection = useCallback((index: number) => {
+    if (scrollContainerRef.current) {
+      const sectionWidth = scrollContainerRef.current.offsetWidth
+      scrollContainerRef.current.scrollTo({
+        left: sectionWidth * index,
+        behavior: "smooth",
+      })
       setCurrentSection(index)
+      
+      // Update URL with section parameter
+      const url = new URL(window.location.href)
+      url.searchParams.set('section', index.toString())
+      window.history.pushState({}, '', url)
     }
-  }
+  }, [])
 
-  const goToNextSection = () => {
-    if (currentSection < sections.length - 1) {
-      setCurrentSection(currentSection + 1)
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY.current = e.touches[0].clientY
+      touchStartX.current = e.touches[0].clientX
     }
-  }
 
-  const goToPrevSection = () => {
-    if (currentSection > 0) {
-      setCurrentSection(currentSection - 1)
+    const handleTouchMove = (e: TouchEvent) => {
+      if (Math.abs(e.touches[0].clientY - touchStartY.current) > 10) {
+        e.preventDefault()
+      }
     }
-  }
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndY = e.changedTouches[0].clientY
+      const touchEndX = e.changedTouches[0].clientX
+      const deltaY = touchStartY.current - touchEndY
+      const deltaX = touchStartX.current - touchEndX
+
+      if (Math.abs(deltaY) > Math.abs(deltaX) && Math.abs(deltaY) > 50) {
+        if (deltaY > 0 && currentSection < sections.length - 1) {
+          scrollToSection(currentSection + 1)
+        } else if (deltaY < 0 && currentSection > 0) {
+          scrollToSection(currentSection - 1)
+        }
+      }
+    }
+
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener("touchstart", handleTouchStart, { passive: true })
+      container.addEventListener("touchmove", handleTouchMove, { passive: false })
+      container.addEventListener("touchend", handleTouchEnd, { passive: true })
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("touchstart", handleTouchStart)
+        container.removeEventListener("touchmove", handleTouchMove)
+        container.removeEventListener("touchend", handleTouchEnd)
+      }
+    }
+  }, [currentSection, sections.length, scrollToSection])
+
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault()
+
+        if (!scrollContainerRef.current) return
+
+        scrollContainerRef.current.scrollBy({
+          left: e.deltaY,
+          behavior: "instant",
+        })
+
+        const sectionWidth = scrollContainerRef.current.offsetWidth
+        const newSection = Math.round(scrollContainerRef.current.scrollLeft / sectionWidth)
+        if (newSection !== currentSection) {
+          setCurrentSection(newSection)
+        }
+      }
+    }
+
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener("wheel", handleWheel, { passive: false })
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("wheel", handleWheel)
+      }
+    }
+  }, [currentSection, sections.length, scrollToSection])
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (scrollThrottleRef.current) return
+
+      scrollThrottleRef.current = requestAnimationFrame(() => {
+        if (!scrollContainerRef.current) {
+          scrollThrottleRef.current = undefined
+          return
+        }
+
+        const sectionWidth = scrollContainerRef.current.offsetWidth
+        const scrollLeft = scrollContainerRef.current.scrollLeft
+        const newSection = Math.round(scrollLeft / sectionWidth)
+
+        if (newSection !== currentSection && newSection >= 0 && newSection < sections.length) {
+          setCurrentSection(newSection)
+        }
+
+        scrollThrottleRef.current = undefined
+      })
+    }
+
+    const container = scrollContainerRef.current
+    if (container) {
+      container.addEventListener("scroll", handleScroll, { passive: true })
+    }
+
+    return () => {
+      if (container) {
+        container.removeEventListener("scroll", handleScroll)
+      }
+      if (scrollThrottleRef.current) {
+        cancelAnimationFrame(scrollThrottleRef.current)
+      }
+    }
+  }, [currentSection, sections.length, scrollToSection])
 
   return (
     <main className="relative h-screen w-full overflow-hidden bg-background">
@@ -128,115 +248,33 @@ function FusionPageContent() {
         <div className="absolute inset-0 bg-black/20" />
       </div>
 
-      <nav
-        className={`fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-6 transition-opacity duration-700 md:px-12 ${
-          isLoaded ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <button
-          onClick={() => scrollToSection(0)}
-          className="flex items-center gap-2 transition-transform hover:scale-105"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/15 backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-foreground/25">
-            <span className="font-sans text-xl font-bold text-foreground">ϕ</span>
-          </div>
-          <span className="font-sans text-xl font-semibold tracking-tight text-foreground">Fusion Lab</span>
-        </button>
-
-        <div className="hidden items-center gap-8 md:flex">
-          {["Problem", "Solution", "Approach", "Plasma", "Vertical", "Insights"].map((item, index) => {
-            // Plasma links to chamber page, Vertical links to vertical-vis page
-            if (item === "Plasma") {
-              return (
-                <Link
-                  key={item}
-                  href="/chamber"
-                  className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
-                >
-                  {item}
-                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
-                </Link>
-              )
-            }
-            if (item === "Vertical") {
-              return (
-                <Link
-                  key={item}
-                  href="/vertical-vis"
-                  className="group relative font-sans text-sm font-medium transition-colors text-foreground/80 hover:text-foreground"
-                >
-                  {item}
-                  <span className="absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 w-0 group-hover:w-full" />
-                </Link>
-              )
-            }
-            // Map to correct sections: Problem=1 (ProblemSection), Solution=2 (SolutionSection), Approach=3 (ApproachSection), Insights=3 (ApproachSection)
-            const sectionMap: Record<string, number> = {
-              "Problem": 1,
-              "Solution": 2,
-              "Approach": 3,
-              "Insights": 3
-            }
-            const sectionIndex = sectionMap[item] ?? 0
-            return (
-              <button
-                key={item}
-                onClick={() => scrollToSection(sectionIndex)}
-                className={`group relative font-sans text-sm font-medium transition-colors ${
-                  currentSection === sectionIndex ? "text-foreground" : "text-foreground/80 hover:text-foreground"
-                }`}
-              >
-                {item}
-                <span
-                  className={`absolute -bottom-1 left-0 h-px bg-foreground transition-all duration-300 ${
-                    currentSection === sectionIndex ? "w-full" : "w-0 group-hover:w-full"
-                  }`}
-                />
-              </button>
-            )
-          })}
-        </div>
-      </nav>
+      <Navigation
+        isLoaded={isLoaded}
+        currentSection={currentSection}
+        onSectionClick={scrollToSection}
+        variant="fusion"
+      />
 
       <div
-        className={`relative z-10 h-screen overflow-y-auto pt-20 transition-opacity duration-700 ${
+        ref={scrollContainerRef}
+        data-scroll-container
+        className={`relative z-10 flex h-screen overflow-x-auto overflow-y-hidden transition-opacity duration-700 ${
           isLoaded ? "opacity-100" : "opacity-0"
         }`}
+        style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         {sections.map((Section, index) => (
-          <div
-            key={index}
-            className={`${currentSection === index ? "block" : "hidden"}`}
-          >
+          <div key={index} className="min-h-screen w-screen shrink-0">
             <Section />
           </div>
         ))}
       </div>
 
-      {/* Navigation Arrows */}
-      {currentSection > 0 && (
-        <button
-          onClick={goToPrevSection}
-          className={`fixed left-1/2 top-8 z-50 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-foreground/10 backdrop-blur-md transition-all duration-300 hover:bg-foreground/20 ${
-            isLoaded ? "opacity-100" : "opacity-0"
-          }`}
-          aria-label="Previous section"
-        >
-          <ChevronUp className="h-5 w-5 text-foreground" />
-        </button>
-      )}
-
-      {currentSection < sections.length - 1 && (
-        <button
-          onClick={goToNextSection}
-          className={`fixed bottom-8 left-1/2 z-50 flex h-10 w-10 -translate-x-1/2 items-center justify-center rounded-full bg-foreground/10 backdrop-blur-md transition-all duration-300 hover:bg-foreground/20 ${
-            isLoaded ? "opacity-100" : "opacity-0"
-          }`}
-          aria-label="Next section"
-        >
-          <ChevronDown className="h-5 w-5 text-foreground" />
-        </button>
-      )}
+      <style jsx global>{`
+        div::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </main>
   )
 }
