@@ -182,8 +182,10 @@ def run(agent: Agent, num_episodes=10, track_shape=False, interactive=False):
     ax2.legend()
 
     plt.tight_layout()
-    plt.savefig("random_baseline.png", dpi=150)
-    print(f"\nPlot saved to: random_baseline.png")
+    output_path = Path(__file__).parent / "results" / "random_baseline.png"
+    output_path.parent.mkdir(exist_ok=True)
+    plt.savefig(output_path, dpi=150)
+    print(f"\nPlot saved to: {output_path}")
     plt.close()  # Close to free memory, will show all plots at the end
 
     # Print statistics
@@ -402,8 +404,10 @@ def visualize_shape_self_fixing(shape_history, agent_name="Agent"):
     plt.tight_layout(rect=[0, 0, 1, 0.99])
     
     filename = f"shape_self_fixing_{agent_name.lower().replace(' ', '_')}.png"
-    plt.savefig(filename, dpi=150, bbox_inches='tight')
-    print(f"\n✨ Shape self-fixing visualization saved to: {filename}")
+    output_path = Path(__file__).parent / "results" / filename
+    output_path.parent.mkdir(exist_ok=True)
+    plt.savefig(output_path, dpi=150, bbox_inches='tight')
+    print(f"\n✨ Shape self-fixing visualization saved to: {output_path}")
     plt.close()
 
 
